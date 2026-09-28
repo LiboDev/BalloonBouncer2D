@@ -1,0 +1,118 @@
+{
+  "url": "http://localhost:5173/?debug&dpr={scale}",
+  "outDir": "marketing",
+  "channel": "chrome",
+  "ready": "window.__game !== undefined",
+  "waitTimeout": 60000,
+  "bootDelay": 1.2,
+  "bot": {
+    "js": "() => { const g = window.__game; const pw = g.effPower; let best = null, bd = 1e9; const t = [...g.props.filter(p => p.state === 'idle' && p.def.power <= pw), ...g.pickups, ...g.ramps]; for (const p of t) { const dd = p.d - g.d; if (dd < 2 || dd > 35) continue; if (dd < bd) { bd = dd; best = p; } } return best ? best.x - g.x : 0; }",
+    "sensitivity": 3,
+    "range": 0.2,
+    "anchor": [0.5, 0.7]
+  },
+  "devices": {
+    "portrait-9x16": { "viewport": [360, 640], "scale": 3 },
+    "landscape-16x9": { "viewport": [640, 360], "scale": 3 },
+    "phone-tall": { "viewport": [390, 844], "scale": 3 },
+    "phone-wide": { "viewport": [844, 390], "scale": 3 },
+    "tablet-portrait": { "viewport": [768, 1024], "scale": 2 },
+    "tablet-landscape": { "viewport": [1024, 768], "scale": 2 },
+    "desktop-1440p": { "viewport": [1280, 720], "scale": 2 }
+  },
+  "scenes": [
+    { "shot": "01-title" },
+    { "mouseDown": true },
+    { "steer": 3.2 },
+    { "shot": "02-first-smash" },
+    { "eval": "window.__game.debugUpgrade()" },
+    { "sleep": 0.25 },
+    { "shot": "03-upgrade" },
+    { "steer": 1.5 },
+    { "eval": "window.__game.debugUpgrade()" }, { "sleep": 0.8 },
+    { "eval": "window.__game.debugUpgrade()" }, { "sleep": 0.8 },
+    { "eval": "window.__game.debugUpgrade()" }, { "sleep": 0.8 },
+    { "steer": 3.5 },
+    { "shot": "04-monster-combo" },
+    { "eval": "window.__game.activatePower('flame', window.__game.fx.target.clone())" },
+    { "steer": 1.7 },
+    { "shot": "05-flamethrower" },
+    { "steer": 5 },
+    { "eval": "window.__game.activatePower('speed', window.__game.fx.target.clone())" },
+    { "steer": 1.9 },
+    { "shot": "06-invincible" },
+    { "steer": 3.5 },
+    { "eval": "window.__game.activatePower('bomb', window.__game.fx.target.clone())" },
+    { "sleep": 0.22 },
+    { "shot": "07-mega-bomb" },
+    { "mouseUp": true },
+    { "reload": true },
+    { "click": [0.5, 0.7] },
+    { "eval": "window.__game.debugUpgrade()" }, { "sleep": 0.8 },
+    { "eval": "window.__game.debugUpgrade()" }, { "sleep": 0.8 },
+    { "eval": "window.__game.debugUpgrade()" }, { "sleep": 0.8 },
+    { "eval": "window.__game.debugUpgrade()" }, { "sleep": 0.8 },
+    { "eval": "window.__game.debugUpgrade()" }, { "sleep": 0.8 },
+    { "eval": "window.__game.debugUpgrade()" }, { "sleep": 0.8 },
+    { "mouseDown": true },
+    { "steer": 3 },
+    { "shot": "08-mega-dozer" },
+    { "mouseUp": true },
+    { "eval": "window.__game.time = 60; window.__game.finaleActive = true; window.__game.finaleTimer = 0.05" },
+    { "waitFor": "window.__game.boss && window.__game.boss.phase === 'charge'" },
+    { "sleep": 0.9 },
+    { "shot": "09-boss-showdown" },
+    { "waitFor": "window.__game.boss && window.__game.boss.exploded" },
+    { "sleep": 0.12 },
+    { "shot": "10-boss-destroyed" },
+    { "waitFor": "window.__game.state === 'end'" },
+    { "sleep": 1.8 },
+    { "shot": "11-victory" }
+  ],
+  "previews": [
+    {
+      "name": "landscape", "viewport": [1280, 720], "scale": 1.5, "size": [1920, 1080],
+      "seconds": 15, "fps": 15, "preroll": 1.2,
+      "urlSuffix": "&capture", "stepJs": "window.__game.step({dt})",
+      "events": [
+        { "at": 0.18, "js": "window.__game.debugUpgrade()" },
+        { "at": 0.36, "js": "window.__game.debugUpgrade()" },
+        { "at": 0.5, "js": "window.__game.debugUpgrade()" },
+        { "at": 0.58, "js": "window.__game.activatePower('flame', window.__game.fx.target.clone())" },
+        { "at": 0.78, "js": "window.__game.activatePower('speed', window.__game.fx.target.clone())" },
+        { "at": 0.93, "js": "window.__game.activatePower('bomb', window.__game.fx.target.clone())" }
+      ]
+    },
+    {
+      "name": "portrait", "viewport": [540, 960], "scale": 2, "size": [1080, 1920],
+      "seconds": 15, "fps": 15, "preroll": 1.2,
+      "urlSuffix": "&capture", "stepJs": "window.__game.step({dt})",
+      "events": [
+        { "at": 0.18, "js": "window.__game.debugUpgrade()" },
+        { "at": 0.36, "js": "window.__game.debugUpgrade()" },
+        { "at": 0.5, "js": "window.__game.debugUpgrade()" },
+        { "at": 0.58, "js": "window.__game.activatePower('flame', window.__game.fx.target.clone())" },
+        { "at": 0.78, "js": "window.__game.activatePower('speed', window.__game.fx.target.clone())" },
+        { "at": 0.93, "js": "window.__game.activatePower('bomb', window.__game.fx.target.clone())" }
+      ]
+    }
+  ],
+  "refs": {
+    "vehicle-monster": "portrait-9x16/04-monster-combo.png",
+    "smash": "portrait-9x16/05-flamethrower.png",
+    "vehicle-dozer": "portrait-9x16/08-mega-dozer.png",
+    "sky": "portrait-9x16/01-title.png",
+    "boss": "portrait-9x16/09-boss-showdown.png"
+  },
+  "refMaxSide": 1280,
+  "keyArt": [
+    { "name": "boss-showdown-1920x1080", "src": "boss.png", "size": [1920, 1080] },
+    { "name": "boss-showdown-1080x1080", "src": "boss.png", "size": [1080, 1080] },
+    { "name": "vehicle-lineup-1920x1080", "src": "lineup.png", "size": [1920, 1080] },
+    { "name": "vehicle-lineup-2560x1080", "src": "lineup.png", "size": [2560, 1080] }
+  ],
+  "storeShots": {
+    "sets": { "landscape-16x9": "16x9", "portrait-9x16": "9x16" },
+    "order": ["02-first-smash", "04-monster-combo", "05-flamethrower", "06-invincible", "07-mega-bomb", "09-boss-showdown", "10-boss-destroyed", "08-mega-dozer"]
+  }
+}

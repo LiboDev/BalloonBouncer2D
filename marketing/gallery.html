@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Balloon Bouncer — Promotional Kit</title>
+<style>
+  :root { color-scheme:dark; --bg:#11182f; --panel:#1c2647; --gold:#ffe066; --muted:#b9c4e5; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.6 system-ui,sans-serif; background:var(--bg); color:#fff; }
+  main { max-width:1280px; margin:auto; padding:44px 28px 72px; }
+  a { color:var(--gold); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .eyebrow { color:#85d8ff; text-transform:uppercase; font-size:13px; font-weight:800; letter-spacing:.18em; }
+  h1 { margin:10px 0; font-size:clamp(32px,5vw,58px); line-height:1.1; }
+  h2 { margin:0 0 20px; font-size:30px; line-height:1.2; }
+  p { color:var(--muted); max-width:72ch; }
+  .intro { display:flex; justify-content:space-between; align-items:center; gap:28px; margin-bottom:32px; }
+  .intro img { width:116px; border-radius:26px; }
+  .hero { width:100%; display:block; border-radius:24px; }
+  section { margin-top:48px; }
+  .grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+  .card { margin:0; padding:18px; background:var(--panel); border:1px solid #fff1; border-radius:20px; }
+  .card img { display:block; width:100%; height:230px; object-fit:contain; border-radius:10px; }
+  figcaption { margin-top:14px; font-weight:750; }
+  figcaption small { display:block; font-weight:400; color:var(--muted); }
+  .shots { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:16px; }
+  .shots img { width:100%; border-radius:12px; display:block; }
+  .videos { display:grid; grid-template-columns:2fr 1fr; gap:24px; }
+  video { width:100%; max-height:600px; display:block; background:#10152c; border-radius:12px; }
+  .copy { padding:28px; border-left:5px solid var(--gold); background:var(--panel); border-radius:0 18px 18px 0; }
+  .copy blockquote { margin:0 0 14px; color:var(--gold); font-size:30px; font-weight:800; }
+  .links { display:flex; flex-wrap:wrap; gap:12px; margin-top:24px; }
+  .links a { display:inline-block; padding:10px 16px; background:#2b365c; border-radius:10px; }
+  footer { margin-top:48px; padding-top:22px; border-top:1px solid #fff2; color:var(--muted); font-size:14px; }
+  @media(max-width:760px) { .grid { grid-template-columns:1fr; } .shots { grid-template-columns:repeat(2,1fr); } .videos { grid-template-columns:1fr; } .intro img { width:80px; } main { padding:28px 18px; } }
+</style>
+</head>
+<body><main>
+  <header class="intro">
+    <div><div class="eyebrow">Promotional kit</div><h1>Balloon Bouncer</h1><p>Illustrated key art, exact-size store assets, real gameplay captures, and ready promotional copy.</p></div>
+    <img src="dist/icons/icon-256.png" alt="A white-blue ball pops a hot-pink balloon in a yellow flash">
+  </header>
+  <img class="hero" src="dist/cover-art/with-logo/banner-16x9-1920x1080.jpg" alt="A fireball ricochets through colorful balloons and bounce rails">
+  <div class="links"><a href="copy.md">Promotional copy</a><a href="README.md">Asset and upload guide</a><a href="dist/manifest.json">File manifest</a></div>
+
+  <section><h2>Store artwork</h2><p>Clean artwork is supplied for Playables thumbnails. Title variants are supplied for social and video placements.</p>
+    <div class="grid">
+      <figure class="card"><img src="dist/cover-art/clean/banner-16x9-1920x1080.jpg" alt="Clean landscape cover art"><figcaption><a href="dist/cover-art/clean/banner-16x9-1920x1080.jpg" download>Landscape banner</a><small>1920 × 1080</small></figcaption></figure>
+      <figure class="card"><img src="dist/cover-art/clean/banner-9x16-1080x1920.jpg" alt="Clean portrait cover art"><figcaption><a href="dist/cover-art/clean/banner-9x16-1080x1920.jpg" download>Portrait banner</a><small>1080 × 1920</small></figcaption></figure>
+      <figure class="card"><img src="dist/icons/icon-512.png" alt="A white-blue ball pops a hot-pink balloon against vivid blue"><figcaption><a href="dist/icons/icon-512.png" download>Opaque store icon</a><small>512 × 512</small></figcaption></figure>
+    </div>
+  </section>
+
+  <section><h2>Real gameplay screenshots</h2><p>Fireballs, lightning orbs, black holes, a perfect clear, and the upgrade shop. Five store captures are supplied in each orientation, plus full device sets.</p>
+    <div class="shots">
+      <a href="dist/store/screenshots-9x16/01-fireball.jpg"><img src="dist/store/screenshots-9x16/01-fireball.jpg" alt="Real gameplay with fireballs"></a>
+      <a href="dist/store/screenshots-9x16/02-lightning-orb.jpg"><img src="dist/store/screenshots-9x16/02-lightning-orb.jpg" alt="Real gameplay with lightning orbs"></a>
+      <a href="dist/store/screenshots-9x16/03-black-hole.jpg"><img src="dist/store/screenshots-9x16/03-black-hole.jpg" alt="Real gameplay with black holes"></a>
+      <a href="dist/store/screenshots-9x16/04-results.jpg"><img src="dist/store/screenshots-9x16/04-results.jpg" alt="Perfect clear result screen"></a>
+      <a href="dist/store/screenshots-9x16/05-upgrade-shop.jpg"><img src="dist/store/screenshots-9x16/05-upgrade-shop.jpg" alt="Upgrade shop with all five ball types"></a>
+    </div>
+  </section>
+
+  <section><h2>Gameplay previews</h2>
+    <div class="videos">
+      <figure class="card"><video controls playsinline preload="metadata" poster="dist/store/screenshots-16x9/01-fireball.jpg" src="dist/previews/gameplay-landscape-1920x1080.mp4"></video><figcaption>Landscape gameplay<small>1920 × 1080 · 30 fps · 12 seconds · silent</small></figcaption></figure>
+      <figure class="card"><video controls playsinline preload="metadata" poster="dist/store/screenshots-9x16/01-fireball.jpg" src="dist/previews/gameplay-portrait-1080x1920.mp4"></video><figcaption>Portrait gameplay<small>1080 × 1920 · 30 fps · 12 seconds · silent</small></figcaption></figure>
+    </div>
+  </section>
+
+  <section><h2>Brand and social assets</h2><div class="grid">
+    <figure class="card"><img src="dist/logo/logo-transparent.png" alt="Balloon Bouncer wordmark"><figcaption><a href="dist/logo/logo-transparent.png" download>Transparent wordmark</a></figcaption></figure>
+    <figure class="card"><img src="dist/cover-art/with-logo/square-1x1-1080.jpg" alt="Square art with the Balloon Bouncer title"><figcaption><a href="dist/cover-art/with-logo/square-1x1-1080.jpg" download>Square social art</a><small>1080 × 1080</small></figcaption></figure>
+    <figure class="card"><img src="dist/cover-art/with-logo/social-og-1200x630.jpg" alt="Landscape social card"><figcaption><a href="dist/cover-art/with-logo/social-og-1200x630.jpg" download>Link preview card</a><small>1200 × 630</small></figcaption></figure>
+  </div></section>
+
+  <section><h2>Promotional copy</h2><div class="copy"><blockquote>Fling once. Watch everything pop.</blockquote><p>Aim, fling, and ricochet through colorful balloon fields. Pop enough to clear each level, earn coins, and build a stronger launch.</p><a href="copy.md">Full store listing, video description, captions, and alt text →</a></div></section>
+  <footer>Illustrations are promotional key art. Screenshots and preview footage are captured from the real game. See the asset guide for current portal requirements and usage details.</footer>
+</main></body></html>

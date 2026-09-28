@@ -1,0 +1,41 @@
+{
+  "style": "Art style for the game <GAME NAME> (<one-line genre>): <rendering style, e.g. bright toy-like low-poly 3D, chunky geometry, matte/plastic materials, saturated colours, soft warm light>. The hero is <HERO> in <PRIMARY #hex> with <ACCENT #hex> details. The world is <SETTING + LIGHTING + PALETTE>. Props/effects that exist in the game: <LIST>. Family friendly: no people, no gore, no weapons aimed at people. The attached images are real screenshots of the game; match their palette and design language, render with more polish and drama.",
+  "jobs": [
+    {
+      "id": "icon",
+      "out": "marketing/raw/icon.png",
+      "size": "1024x1024",
+      "refs": ["marketing/ref/hero.png"],
+      "prompt": "Square app icon master. <HERO> <ACTION> causing <CONSEQUENCE>, low three-quarter angle. Simple gradient background. Hero fills ~75% and stays inside the centre 80% so it survives circle/rounded crops. Readable at 48 px. No text, letters, numbers, logos, borders or frames."
+    },
+    {
+      "id": "cover-landscape",
+      "out": "marketing/raw/cover-landscape.png",
+      "size": "1536x1024",
+      "refs": ["marketing/ref/hero.png", "marketing/ref/scene.png"],
+      "prompt": "Landscape cover art. <HERO> <ACTION> causing <CONSEQUENCE>, strong diagonal, dramatic low camera, <WORLD> behind. Keep the action inside the central 16:9 area (~9% expendable top and bottom). Keep the upper-left quarter calm for a logo. No text, letters, numbers, logos or UI."
+    },
+    {
+      "id": "cover-portrait",
+      "out": "marketing/raw/cover-portrait.png",
+      "size": "1024x1536",
+      "refs": ["marketing/ref/hero.png", "marketing/ref/scene.png"],
+      "prompt": "Tall portrait cover art for phones. <HERO> in the lower-middle third <ACTION>, the scene leads the eye upward. Content inside the central 9:16 band; top 20% mostly sky/empty for a logo. No text, letters, numbers, logos or UI."
+    },
+    {
+      "id": "cover-square",
+      "out": "marketing/raw/cover-square.png",
+      "size": "1024x1024",
+      "refs": ["marketing/ref/hero.png"],
+      "prompt": "Square cover art telling the core loop in one image (e.g. progression from small to huge) with a softly blurred background. No text, letters, numbers, logos or UI."
+    },
+    {
+      "id": "logo",
+      "out": "marketing/raw/logo.png",
+      "size": "1536x1024",
+      "background": "transparent",
+      "refs": [],
+      "prompt": "Game logo wordmark reading exactly '<NAME>' (spelled <N-A-M-E>). Chunky rounded 3D cartoon letters, <COLOURS>, thick dark outline and drop extrusion, a few small effect details matching the game. Transparent background, no other words, centred with generous padding. The spelling must be exactly <NAME>."
+    }
+  ]
+}

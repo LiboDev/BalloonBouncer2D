@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#1b1f3a" />
+  <title>Balloon Bouncer</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- For YouTube Playables, load the SDK before any game code:
+  <script src="https://www.youtube.com/game_api/v1"></script> -->
+</head>
+<body>
+  <div id="stage">
+    <canvas id="game" aria-label="Balloon Bouncer game area"></canvas>
+
+    <div id="hud" class="hidden">
+      <div class="hud-top">
+        <div class="pill" id="hud-level">Level 1</div>
+        <div class="pill coin" id="hud-money" aria-label="Coins">0</div>
+        <button class="icon-btn" id="btn-sound" aria-label="Toggle sound">🔊</button>
+        <button class="icon-btn" id="btn-speed" aria-label="Change speed">1×</button>
+      </div>
+      <div class="progress-wrap" aria-label="Balloons popped">
+        <div class="progress-track"><div id="hud-bar"></div></div>
+        <div id="hud-count">0 / 0</div>
+      </div>
+    </div>
+
+    <div id="hint" class="hint hidden">Drag back &amp; release to fling</div>
+
+    <div id="overlay-title" class="overlay">
+      <div class="panel">
+        <h1>Balloon<br />Bouncer</h1>
+        <p class="tagline">Fling once. Watch everything pop.</p>
+        <button class="btn primary" id="btn-play">Play</button>
+      </div>
+    </div>
+
+    <div id="overlay-results" class="overlay hidden">
+      <div class="panel">
+        <h2 id="res-title">Nice!</h2>
+        <p id="res-sub"></p>
+        <div class="results-stats">
+          <div><small>Balloons popped</small><strong id="res-popped">0/0</strong></div>
+          <div><small>Coins earned</small><strong class="coin" id="res-earned">+0</strong></div>
+        </div>
+        <div id="res-unlock" class="unlock hidden">
+          <canvas id="unlock-canvas" width="240" height="280"></canvas>
+          <div>
+            <small>Coming up next</small>
+            <strong id="unlock-name"></strong>
+            <span id="unlock-hp"></span>
+          </div>
+        </div>
+        <button class="btn primary" id="btn-to-shop">Shop &amp; continue</button>
+      </div>
+    </div>
+
+    <div id="overlay-shop" class="overlay hidden">
+      <div class="panel">
+        <h2>Upgrade your launch</h2>
+        <div class="pill coin big" id="shop-money">0</div>
+        <div id="shop-list" class="shop-list"></div>
+        <button class="btn primary" id="btn-next">Play next level</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="src/platform.js"></script>
+  <script src="src/audio.js"></script>
+  <script src="src/game.js"></script>
+</body>
+</html>

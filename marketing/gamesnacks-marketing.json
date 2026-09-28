@@ -1,0 +1,28 @@
+{
+  "horizontalBanners": [
+    { "size": { "width": 1920, "height": 1080 }, "src": "dist/cover-art/clean/banner-16x9-1920x1080.jpg" },
+    { "size": { "width": 480, "height": 270 }, "src": "dist/cover-art/clean/banner-16x9-480x270.jpg" },
+    { "size": { "width": 240, "height": 135 }, "src": "dist/cover-art/clean/banner-16x9-240x135.jpg" }
+  ],
+  "verticalBanners": [
+    { "size": { "width": 1080, "height": 1920 }, "src": "dist/cover-art/clean/banner-9x16-1080x1920.jpg" },
+    { "size": { "width": 270, "height": 480 }, "src": "dist/cover-art/clean/banner-9x16-270x480.jpg" },
+    { "size": { "width": 135, "height": 240 }, "src": "dist/cover-art/clean/banner-9x16-135x240.jpg" }
+  ],
+  "screenshots": [
+    { "size": { "width": 1920, "height": 1080 }, "src": "dist/store/screenshots-16x9/01-fireball.jpg" },
+    { "size": { "width": 1920, "height": 1080 }, "src": "dist/store/screenshots-16x9/02-lightning-orb.jpg" },
+    { "size": { "width": 1920, "height": 1080 }, "src": "dist/store/screenshots-16x9/03-black-hole.jpg" },
+    { "size": { "width": 1080, "height": 1920 }, "src": "dist/store/screenshots-9x16/01-fireball.jpg" },
+    { "size": { "width": 1080, "height": 1920 }, "src": "dist/store/screenshots-9x16/02-lightning-orb.jpg" },
+    { "size": { "width": 1080, "height": 1920 }, "src": "dist/store/screenshots-9x16/03-black-hole.jpg" }
+  ],
+  "gameIcons": [
+    { "size": { "width": 512, "height": 512 }, "src": "dist/icons/icon-512.png" },
+    { "size": { "width": 256, "height": 256 }, "src": "dist/icons/icon-256.png" },
+    { "size": { "width": 128, "height": 128 }, "src": "dist/icons/icon-128.png" }
+  ],
+  "trailers": [
+    { "size": { "width": 1920, "height": 1080 }, "src": "dist/previews/gameplay-landscape-1920x1080.mp4" }
+  ]
+}

@@ -1,0 +1,250 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: radial-gradient(circle at 18% 32%, #394c89 0, transparent 38%), radial-gradient(circle at 85% 72%, #603b8c 0, transparent 40%), #1b1f3a;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  font-family: "Nunito", "Segoe UI Rounded", "Arial Rounded MT Bold", system-ui, sans-serif;
+  color: #fff;
+}
+
+/* The stage matches the canvas world and scales uniformly into any viewport. */
+#stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1000px;
+  height: 1300px;
+  transform-origin: 0 0;
+  overflow: hidden;
+}
+
+#game {
+  position: absolute;
+  inset: 0;
+  width: 1000px;
+  height: 1300px;
+  display: block;
+}
+
+.hidden { display: none !important; }
+
+/* HUD */
+#hud {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: 20px;
+  pointer-events: none;
+}
+
+.hud-top { display: flex; align-items: center; gap: 12px; }
+.hud-top .pill.coin { margin-left: auto; }
+.hud-top .pill { font-size: 30px; padding: 12px 20px; }
+.hud-top .pill.coin::before { width: 24px; height: 24px; margin-right: 8px; }
+.progress-wrap { display: flex; align-items: center; gap: 14px; margin-top: 14px; font-size: 26px; font-weight: 900; text-shadow: 0 2px 3px #202044; }
+.progress-track { flex: 1; height: 20px; border-radius: 20px; border: 3px solid #fff9; overflow: hidden; background: #211b52aa; }
+#hud-bar { height: 100%; width: 0%; background: linear-gradient(90deg,#ff9a3c,#ffe066); border-radius: 20px; transition: width .15s; }
+#hud-bar.passed { background: linear-gradient(90deg,#22c9a4,#b5ff8f); }
+
+.pill {
+  display: inline-block;
+  background: rgba(22, 20, 58, 0.72);
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  padding: 10px 26px;
+  font-size: 38px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.pill.coin::before {
+  content: "";
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  margin-right: 12px;
+  vertical-align: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff6b0, #ffc300 55%, #c77d00);
+  box-shadow: inset 0 0 0 3px #a86500;
+}
+
+.pill.big { font-size: 44px; margin: 8px auto 18px; }
+
+.icon-btn {
+  pointer-events: auto;
+  color: #fff;
+  width: 68px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  background: rgba(22, 20, 58, 0.72);
+  cursor: pointer;
+  padding: 0;
+  font: 900 30px/1 system-ui, sans-serif;
+}
+
+.icon-btn:focus-visible, .btn:focus-visible, .buy:focus-visible {
+  outline: 4px solid #ffe066;
+  outline-offset: 3px;
+}
+
+.hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 230px;
+  text-align: center;
+  font-size: 36px;
+  font-weight: 800;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  animation: bob 1.6s ease-in-out infinite;
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* Overlays */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 12, 40, 0.55);
+}
+
+.panel {
+  width: 760px;
+  max-height: 1220px;
+  overflow-y: auto;
+  padding: 44px 36px;
+  border-radius: 40px;
+  background: linear-gradient(#3b2f86, #251c5c);
+  border: 5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 0 rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+
+h1 {
+  margin: 0 0 10px;
+  font-size: 100px;
+  line-height: 0.95;
+  font-weight: 900;
+  color: #ffe066;
+  text-shadow: 0 8px 0 #c2410c;
+}
+
+h2 {
+  margin: 0 0 10px;
+  font-size: 68px;
+  font-weight: 900;
+  color: #ffe066;
+  text-shadow: 0 6px 0 #c2410c;
+}
+
+.tagline { font-size: 36px; font-weight: 800; margin: 16px 0 30px; }
+#res-sub, .sub { font-size: 34px; font-weight: 700; opacity: 0.9; margin: 12px 0 18px; line-height: 1.3; }
+.results-stats { display: flex; justify-content: center; gap: 18px; margin: 22px auto; }
+.results-stats > div { flex: 1; padding: 16px; border-radius: 20px; background: #17134288; }
+.results-stats small { display: block; font-size: 24px; opacity: .8; }
+.results-stats strong { display: block; font-size: 44px; color: #ffe066; }
+
+.btn {
+  display: block;
+  margin: 24px auto 0;
+  min-width: 380px;
+  padding: 24px 40px;
+  border: none;
+  border-radius: 28px;
+  font: inherit;
+  font-size: 46px;
+  font-weight: 900;
+  color: #3a1a00;
+  cursor: pointer;
+  background: linear-gradient(#ffe57a, #ffb703);
+  box-shadow: 0 10px 0 #b45309;
+  transition: transform 0.08s;
+}
+
+.btn.secondary {
+  color: #fff;
+  background: linear-gradient(#6d63d6, #4b3fb0);
+  box-shadow: 0 10px 0 #2b2272;
+}
+
+.btn:active { transform: translateY(6px); box-shadow: 0 4px 0 #b45309; }
+.btn.secondary:active { box-shadow: 0 4px 0 #2b2272; }
+
+.unlock {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  padding: 12px 24px;
+  margin: 6px 0;
+  text-align: left;
+}
+
+.unlock canvas { width: 120px; height: 140px; }
+.unlock small { display: block; font-size: 24px; opacity: 0.8; }
+.unlock strong { display: block; font-size: 38px; color: #9ff5ff; }
+.unlock span { font-size: 26px; font-weight: 800; }
+
+/* Shop */
+.shop-list { display: flex; flex-direction: column; gap: 12px; }
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  border-radius: 24px;
+  background: rgba(0, 0, 0, 0.25);
+  text-align: left;
+}
+
+.card canvas { width: 90px; height: 90px; flex: none; }
+.card .info { flex: 1; min-width: 0; }
+.card .name { font-size: 32px; font-weight: 900; }
+.card .desc { font-size: 22px; opacity: 0.8; line-height: 1.2; }
+.card .owned { font-size: 22px; font-weight: 800; color: #9ff5ff; }
+
+.card .buy {
+  flex: none;
+  min-width: 150px;
+  min-height: 76px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 20px;
+  font: inherit;
+  font-size: 30px;
+  font-weight: 900;
+  color: #3a1a00;
+  background: linear-gradient(#ffe57a, #ffb703);
+  box-shadow: 0 7px 0 #b45309;
+  cursor: pointer;
+}
+
+.card .buy:disabled {
+  background: #555a78;
+  color: #c3c6dd;
+  box-shadow: 0 7px 0 #33364d;
+  cursor: default;
+}
+
+.card .buy:not(:disabled):active { transform: translateY(4px); box-shadow: 0 3px 0 #b45309; }

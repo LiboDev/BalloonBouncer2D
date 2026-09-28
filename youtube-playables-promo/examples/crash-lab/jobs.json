@@ -1,0 +1,55 @@
+{
+  "style": "Art style for the game CRASH LAB (a YouTube Playables arcade destruction game): bright toy-like low-poly 3D, chunky bevelled geometry, simple matte/plastic materials, saturated colours, soft warm global illumination, clean readable silhouettes, hybrid-casual mobile game aesthetic, no photorealism, no noisy texture. The player's vehicles are ROYAL BLUE (#2f7bff) with SUNNY YELLOW (#ffd23f) stripes and hub caps. The world is a colourful toy city street at SUNSET: sky grading from gold at the horizon through orange and pink to violet, a distant city skyline silhouette with a few lit windows, pastel buildings (coral, mint, lavender, peach) lining a grey road with white lane dashes and yellow edge lines. Smashable props: cardboard box stacks, orange traffic cones, green trash cans, white picket fences, park benches, round trees in planters, small cartoon cars (red, yellow, green, purple), an orange city bus, storefronts with striped awnings, glass towers. Destruction effects: chunky flying debris blocks, glowing yellow sparks, colourful confetti, small glowing green diamond-shaped scrap orbs, dust puffs. Keep it family-friendly: no people, no gore, no weapons firing at people. The attached images are real screenshots of the game; match their palette and vehicle design language, but render with more polish and drama.",
+  "jobs": [
+    {
+      "id": "icon",
+      "out": "marketing/raw/icon.png",
+      "size": "1024x1024",
+      "refs": ["marketing/ref/vehicle-monster.png", "marketing/ref/smash.png"],
+      "prompt": "Square app icon master. One huge royal-blue monster truck with yellow stripes and giant black tyres, seen from a low three-quarter front angle, bursting diagonally through a stack of cardboard boxes that explode into chunky debris, yellow sparks and a few confetti pieces. Background: a simple warm sunset gradient (gold to pink), no scenery clutter. The truck fills about 75% of the frame and stays inside the centre 80% safe area so the icon can be cropped into a circle or rounded square. Bold silhouette, readable at 48 pixels. Absolutely no text, letters, numbers, logos, borders or frames."
+    },
+    {
+      "id": "cover-landscape",
+      "out": "marketing/raw/cover-landscape.png",
+      "size": "1536x1024",
+      "refs": ["marketing/ref/smash.png", "marketing/ref/sky.png", "marketing/ref/vehicle-monster.png"],
+      "prompt": "Landscape cover art / discovery thumbnail. Hero: a royal-blue monster truck with yellow stripes launching off a yellow-and-black ramp, mid-air, smashing diagonally through a coral storefront with a striped awning; the storefront explodes into chunky debris blocks, glowing sparks, confetti and green glowing scrap orbs flying toward the viewer. Behind: the sunset toy city street, pastel buildings on both sides receding to a glowing sun and skyline silhouette. Strong diagonal composition from lower-left to upper-right, dramatic low camera. Keep the truck and impact inside the central 16:9 area (leave expendable sky at the top and road at the bottom, about 9% each) because the image will be cropped to 16:9. Leave the upper-left quarter relatively calm (sky and distant buildings) so a logo can be overlaid there later. No text, no letters, no numbers, no logos, no UI."
+    },
+    {
+      "id": "cover-portrait",
+      "out": "marketing/raw/cover-portrait.png",
+      "size": "1024x1536",
+      "refs": ["marketing/ref/smash.png", "marketing/ref/sky.png", "marketing/ref/vehicle-dozer.png"],
+      "prompt": "Tall portrait cover art for phones. Seen from behind and slightly above, a huge royal-blue bulldozer-like 'mega dozer' vehicle with a big yellow blade and black treads ploughs down the middle of a sunset toy city street, sending cars, trash cans, cones and cardboard boxes flying upward in an arc of chunky debris, confetti, sparks and glowing green scrap orbs. The road leads the eye up to a big glowing sunset sun and a skyline silhouette; pastel buildings line both sides. The vehicle sits in the lower-middle third. Keep all important content inside the central 9:16 band (the sides will be trimmed slightly) and leave the top 20% mostly sky so a logo can be overlaid. No text, no letters, no numbers, no logos, no UI."
+    },
+    {
+      "id": "cover-square",
+      "out": "marketing/raw/cover-square.png",
+      "size": "1024x1024",
+      "refs": ["marketing/ref/smash.png", "marketing/ref/sky.png"],
+      "prompt": "Square cover art. A small blue shopping cart in the lower-left, a mid-size blue monster truck in the centre and a giant blue mega dozer with a yellow blade in the upper-right, arranged as a rising diagonal 'evolution' line, each bigger than the last, all charging toward the viewer through exploding cardboard boxes, cones and a car that bursts into chunky debris and confetti. Sunset toy-city background (gold-to-violet sky, pastel buildings, skyline silhouette), softly blurred so the vehicles pop. The vehicles are royal blue with yellow accents. No text, letters, numbers, logos or UI."
+    },
+    {
+      "id": "boss",
+      "out": "marketing/raw/boss.png",
+      "size": "1536x1024",
+      "refs": ["marketing/ref/boss.png", "marketing/ref/vehicle-dozer.png", "marketing/ref/sky.png"],
+      "prompt": "Landscape key art of the final showdown. On the left, a giant royal-blue mega dozer with a huge yellow blade; on the right, a menacing dark gunmetal boss tank with glowing red trim and a long cannon (not firing). They collide head-on in the centre of an empty sunset city street, the impact point a bright white-yellow flash with shockwave ring, sparks and flying metal plates. Pastel buildings on both sides, glowing sunset sky and skyline silhouette behind. Dramatic low side camera, symmetrical tension. Keep the collision inside the central 16:9 area. Family friendly, no people. No text, letters, numbers, logos or UI."
+    },
+    {
+      "id": "lineup",
+      "out": "marketing/raw/lineup.png",
+      "size": "1536x1024",
+      "refs": ["marketing/ref/vehicle-monster.png", "marketing/ref/vehicle-dozer.png", "marketing/ref/smash.png"],
+      "prompt": "Landscape 'evolution' lineup illustration of the seven player vehicles, all royal blue with yellow accents, standing on a clean road in a row from left to right, each clearly bigger than the previous: 1) a metal shopping cart, 2) a white-and-blue golf cart with canopy, 3) a small compact car, 4) a pickup truck with roof lights, 5) a monster truck with giant tyres, 6) an armored tank with turret, 7) a gigantic bulldozer 'mega dozer' with a huge yellow blade and treads. Small glowing green arrows or light streaks between them suggest upgrading. Simple warm sunset gradient background with a faint skyline silhouette. Leave margin on all sides. No text, letters, numbers, logos or UI."
+    },
+    {
+      "id": "logo",
+      "out": "marketing/raw/logo.png",
+      "size": "1536x1024",
+      "background": "transparent",
+      "refs": [],
+      "prompt": "Game logo wordmark reading exactly 'CRASH LAB' (two words, capital letters, spelled C-R-A-S-H L-A-B). Chunky, heavy, rounded 3D cartoon letters, slightly tilted upward to the right, 'CRASH' in bright yellow-to-orange gradient and 'LAB' in royal blue, thick dark navy outline (#1b2a4a) and a navy drop extrusion, a few small debris chunks and spark stars breaking off the letters, one crack running through the 'A' of CRASH. Transparent background (alpha), no scene, no other words, centred with generous padding. The spelling must be exactly CRASH LAB."
+    }
+  ]
+}

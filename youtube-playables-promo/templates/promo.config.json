@@ -1,0 +1,62 @@
+{
+  "url": "http://localhost:5173/?debug&dpr={scale}",
+  "outDir": "marketing",
+  "channel": "chrome",
+  "ready": "window.__game !== undefined",
+  "waitTimeout": 60000,
+  "bootDelay": 1.2,
+  "bot": {
+    "js": "() => 0",
+    "sensitivity": 3,
+    "range": 0.2,
+    "anchor": [0.5, 0.7]
+  },
+  "devices": {
+    "portrait-9x16": { "viewport": [360, 640], "scale": 3 },
+    "landscape-16x9": { "viewport": [640, 360], "scale": 3 },
+    "phone-tall": { "viewport": [390, 844], "scale": 3 },
+    "phone-wide": { "viewport": [844, 390], "scale": 3 },
+    "tablet-portrait": { "viewport": [768, 1024], "scale": 2 },
+    "tablet-landscape": { "viewport": [1024, 768], "scale": 2 },
+    "desktop-1440p": { "viewport": [1280, 720], "scale": 2 }
+  },
+  "scenes": [
+    { "shot": "01-title" },
+    { "mouseDown": true },
+    { "steer": 3 },
+    { "shot": "02-first-action" },
+    { "eval": "window.__game.debugUpgrade()" },
+    { "sleep": 0.25 },
+    { "shot": "03-progression" },
+    { "steer": 3 },
+    { "shot": "04-mid-game" },
+    { "mouseUp": true },
+    { "eval": "/* jump to the end of a run, e.g. window.__game.finishRun() */" },
+    { "waitFor": "window.__game.state === 'end'" },
+    { "sleep": 1.5 },
+    { "shot": "05-result" }
+  ],
+  "previews": [
+    {
+      "name": "landscape", "viewport": [1280, 720], "scale": 1.5, "size": [1920, 1080],
+      "seconds": 15, "fps": 15, "preroll": 1.2,
+      "urlSuffix": "&capture", "stepJs": "window.__game.step({dt})",
+      "events": [{ "at": 0.3, "js": "window.__game.debugUpgrade()" }]
+    },
+    {
+      "name": "portrait", "viewport": [540, 960], "scale": 2, "size": [1080, 1920],
+      "seconds": 15, "fps": 15, "preroll": 1.2,
+      "urlSuffix": "&capture", "stepJs": "window.__game.step({dt})",
+      "events": [{ "at": 0.3, "js": "window.__game.debugUpgrade()" }]
+    }
+  ],
+  "refs": {
+    "hero": "portrait-9x16/04-mid-game.png",
+    "scene": "landscape-16x9/02-first-action.png"
+  },
+  "refMaxSide": 1280,
+  "storeShots": {
+    "sets": { "landscape-16x9": "16x9", "portrait-9x16": "9x16" },
+    "order": ["02-first-action", "03-progression", "04-mid-game", "05-result"]
+  }
+}

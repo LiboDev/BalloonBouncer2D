@@ -1,0 +1,8 @@
+/dist/
+/node_modules/
+/.playwright-cli/
+/output/playwright/
+/marketing/preview/
+/marketing/encoded-previews/
+/marketing/*.zip
+*.log

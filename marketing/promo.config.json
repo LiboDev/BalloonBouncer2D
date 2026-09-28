@@ -1,0 +1,21 @@
+{
+  "game": "Balloon Bouncer",
+  "outDir": "marketing",
+  "storeShots": {
+    "sets": {
+      "landscape-16x9": "16x9",
+      "portrait-9x16": "9x16"
+    },
+    "order": [
+      "05-fireball",
+      "07-lightning-orb",
+      "08-black-hole",
+      "09-results",
+      "10-upgrade-shop"
+    ]
+  },
+  "previews": [
+    { "name": "landscape", "size": [1920, 1080], "fps": 30, "seconds": 12 },
+    { "name": "portrait", "size": [1080, 1920], "fps": 30, "seconds": 12 }
+  ]
+}
