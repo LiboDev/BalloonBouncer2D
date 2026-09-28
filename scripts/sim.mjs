@@ -106,8 +106,8 @@ check(true, 'balloon mix rules checked for levels 1-26 x 5 seeds (failures liste
   for (let i = 0; i < 15; i++) g.buy('rubber');
   const s = g.save;
   check(s.owned.rubber === 10, `rubber capped at 10 (got ${s.owned.rubber})`);
-  check(s.money === 1_000_000 - 250, `rubber costs 25 each (spent ${1_000_000 - s.money})`);
-  for (const [k, price] of [['ball', 10], ['saw', 100], ['fireball', 100], ['lightning', 1000], ['blackhole', 10000]]) {
+  check(s.money === 1_000_000 - 100, `rubber costs 10 each (spent ${1_000_000 - s.money})`);
+  for (const [k, price] of [['ball', 5], ['saw', 25], ['fireball', 100], ['lightning', 500], ['blackhole', 1000]]) {
     const before = g.save.money;
     g.buy(k);
     check(before - g.save.money === price, `${k} costs ${price}`);

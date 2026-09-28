@@ -29,13 +29,13 @@
 
   // speed: launch-speed multiplier. bounce: per-bounce speed gain. minB/maxS: bounce speed floor/ceiling.
   const BALL_TYPES = {
-    ball:      { name: 'Ball',          dmg: 1,    price: 10,    r: 11, desc: '1 damage per hit', trail: '160,180,255' },
-    rubber:    { name: 'Rubber Ball',   dmg: 1,    price: 25,    r: 7,  desc: 'Tiny, super fast and extra bouncy', trail: '255,90,200',
+    ball:      { name: 'Ball',          dmg: 1,    price: 5,     r: 11, desc: '1 damage per hit', trail: '160,180,255' },
+    rubber:    { name: 'Rubber Ball',   dmg: 1,    price: 10,    r: 7,  desc: 'Tiny, super fast and extra bouncy', trail: '255,90,200',
                  speed: 1.35, bounce: 1.1, minB: 950, maxS: 2200 },
-    saw:       { name: 'Saw Blade',     dmg: 5,    price: 100,   r: 13, desc: '5 damage per hit', trail: '210,215,225' },
+    saw:       { name: 'Saw Blade',     dmg: 5,    price: 25,    r: 13, desc: '5 damage per hit', trail: '210,215,225' },
     fireball:  { name: 'Fireball',      dmg: 5,    price: 100,   r: 13, desc: '5 damage + fiery blast on every pop', trail: '255,140,0' },
-    lightning: { name: 'Lightning Orb', dmg: 25,   price: 1000,  r: 14, desc: '25 damage, chains to 3 nearby balloons', trail: '120,230,255' },
-    blackhole: { name: 'Black Hole',    dmg: 1000, price: 10000, r: 24, desc: '1,000 damage, eats through balloons', trail: '150,90,255' },
+    lightning: { name: 'Lightning Orb', dmg: 25,   price: 500,   r: 14, desc: '25 damage, chains to 3 nearby balloons', trail: '120,230,255' },
+    blackhole: { name: 'Black Hole',    dmg: 1000, price: 1000,  r: 24, desc: '1,000 damage, eats through balloons', trail: '150,90,255' },
   };
   const BALL_ORDER = ['ball', 'rubber', 'saw', 'fireball', 'lightning', 'blackhole'];
 
@@ -280,7 +280,7 @@
     const add = (type, n) => { for (let i = 0; i < n; i++) types.push(type); };
 
     if (level <= 3) {
-      add('basic', [4, 5, 7][level - 1]);
+      add('basic', [1, 2, 4][level - 1]);
     } else if (level <= 10) {
       const count = 12 + (level - 4) * 2;           // 12..24
       const specials = 2 + Math.floor((level - 4) / 2); // 2..5
@@ -535,16 +535,16 @@
 
       case 'ice':
         popRing(b.x, b.y, b.r, '#dff8ff');
-        spawnShards(b, 6, 'ice');
-        burst(b.x, b.y, 14, { kind: 'chip', speed: [100, 320], color: ['#ffffff', '#aeeaff', '#6cc7f0'], size: [4, 8], life: [0.4, 0.8], g: G * 0.5 });
+        spawnShards(b, 3, 'ice');
+        burst(b.x, b.y, 8, { kind: 'chip', speed: [100, 320], color: ['#ffffff', '#aeeaff', '#6cc7f0'], size: [4, 8], life: [0.4, 0.8], g: G * 0.5 });
         burst(b.x, b.y, 6, { kind: 'smoke', speed: [30, 80], color: '#e8fbff', size: [12, 20], life: [0.4, 0.7] });
         Sfx.shatter();
         break;
 
       case 'stone':
         popRing(b.x, b.y, b.r, '#e7e5e4');
-        spawnShards(b, 8, 'stone');
-        burst(b.x, b.y, 16, { kind: 'chip', speed: [80, 300], color: ['#a8a29e', '#78716c', '#57534e'], size: [5, 10], life: [0.5, 1], g: G * 0.8 });
+        spawnShards(b, 4, 'stone');
+        burst(b.x, b.y, 8, { kind: 'chip', speed: [80, 300], color: ['#a8a29e', '#78716c', '#57534e'], size: [5, 10], life: [0.5, 1], g: G * 0.8 });
         burst(b.x, b.y, 8, { kind: 'smoke', speed: [30, 90], color: '#d6d3d1', size: [16, 26], life: [0.5, 0.9] });
         addShake(6);
         Sfx.crumble();
@@ -577,13 +577,14 @@
 
   function spawnShards(b, n, kind) {
     for (let i = 0; i < n; i++) {
-      const a = (i / n) * TAU + rand(-0.25, 0.25);
-      const sp = rand(450, 700);
+      // Few, big, slower-spinning shards so each one is easy to follow.
+      const a = (i / n) * TAU + rand(-0.35, 0.35);
+      const sp = rand(420, 600);
       shards.push({
         x: b.x + Math.cos(a) * b.r * 0.5, y: b.y + Math.sin(a) * b.r * 0.5,
         vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 120,
-        r: 6, rot: a, vr: rand(-14, 14), life: 0, kind, src: b.id, dead: false,
-        size: kind === 'ice' ? 10 : 11,
+        r: 12, rot: a, vr: rand(-8, 8), life: 0, kind, src: b.id, dead: false,
+        size: kind === 'ice' ? 22 : 24,
       });
     }
   }
@@ -1417,23 +1418,58 @@
   }
 
   function drawShard(c, s) {
+    const ice = s.kind === 'ice';
+    const z = s.size;
+
+    // Motion streak behind the shard
+    const sp = Math.hypot(s.vx, s.vy) || 1;
+    const tl = Math.min(70, sp * 0.06);
+    c.save();
+    c.lineCap = 'round';
+    c.strokeStyle = ice ? 'rgba(200,245,255,0.55)' : 'rgba(120,110,100,0.45)';
+    c.lineWidth = z * 0.7;
+    c.beginPath();
+    c.moveTo(s.x, s.y);
+    c.lineTo(s.x - (s.vx / sp) * tl, s.y - (s.vy / sp) * tl);
+    c.stroke();
+    c.restore();
+
     c.save();
     c.translate(s.x, s.y);
-    c.rotate(s.rot);
-    const z = s.size;
-    c.beginPath();
-    if (s.kind === 'ice') {
-      c.moveTo(z, 0); c.lineTo(-z * 0.6, z * 0.5); c.lineTo(-z * 0.4, -z * 0.5);
-      c.fillStyle = '#dff8ff';
-      c.strokeStyle = '#3aa0d8';
-    } else {
-      c.moveTo(z * 0.8, -z * 0.2); c.lineTo(z * 0.2, z * 0.7); c.lineTo(-z * 0.7, z * 0.3); c.lineTo(-z * 0.4, -z * 0.6);
-      c.fillStyle = '#9c958f';
-      c.strokeStyle = '#3b3632';
+    if (ice) {
+      c.globalCompositeOperation = 'lighter';
+      const glow = c.createRadialGradient(0, 0, 0, 0, 0, z * 1.4);
+      glow.addColorStop(0, 'rgba(160,230,255,0.55)');
+      glow.addColorStop(1, 'rgba(160,230,255,0)');
+      c.fillStyle = glow;
+      c.beginPath(); c.arc(0, 0, z * 1.4, 0, TAU); c.fill();
+      c.globalCompositeOperation = 'source-over';
     }
-    c.closePath();
+    c.rotate(s.rot);
+    const shape = () => {
+      c.beginPath();
+      if (ice) {
+        c.moveTo(z, 0); c.lineTo(-z * 0.2, z * 0.45); c.lineTo(-z * 0.7, z * 0.1); c.lineTo(-z * 0.45, -z * 0.45);
+      } else {
+        c.moveTo(z * 0.8, -z * 0.25); c.lineTo(z * 0.35, z * 0.65); c.lineTo(-z * 0.6, z * 0.5); c.lineTo(-z * 0.75, -z * 0.2); c.lineTo(-z * 0.1, -z * 0.7);
+      }
+      c.closePath();
+    };
+    shape();
+    const g = c.createLinearGradient(-z, -z, z, z);
+    if (ice) { g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, '#bdf0ff'); g.addColorStop(1, '#4fb3e6'); }
+    else { g.addColorStop(0, '#d6d1cb'); g.addColorStop(0.55, '#8f8984'); g.addColorStop(1, '#4e4945'); }
+    c.fillStyle = g;
     c.fill();
+    c.lineJoin = 'round';
+    c.lineWidth = 3.5;
+    c.strokeStyle = ice ? '#1f6f9c' : '#26221f';
+    c.stroke();
+    // Facet highlight
+    c.strokeStyle = ice ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.35)';
     c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(z * 0.55, -z * 0.05); c.lineTo(-z * 0.3, -z * 0.3);
     c.stroke();
     c.restore();
   }
@@ -1954,6 +1990,10 @@
       pop(count = 1) {
         const live = balloons.filter((b) => b.alive).slice(0, count);
         for (const b of live) damageBalloon(b, Infinity);
+        hudDirty = true;
+      },
+      popKinds(kinds) {
+        for (const b of balloons) if (b.alive && kinds.includes(b.type)) damageBalloon(b, Infinity);
         hudDirty = true;
       },
       step(seconds = 1 / 15) {

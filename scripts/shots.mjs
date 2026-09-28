@@ -79,6 +79,10 @@ await evaluate(`__game.configure({ level: 3, seed: 42, owned: { ball: 1 } }); __
 await sleep(500);
 await shot('10-results-fail');
 
+// Ice/stone shards mid-flight (launch straight down-left so balls don't interfere).
+await evaluate(`__game.configure({ level: 14, seed: 42, owned: { ball: 1 } }); __game.setAim(-3, 0.15); __game.launch(); __game.popKinds(['ice', 'stone']); __game.step(0.1)`);
+await shot('12-shards');
+
 // Small phone and landscape tablet to check fit.
 await send('Emulation.setDeviceMetricsOverride', { width: 360, height: 640, deviceScaleFactor: 2, mobile: true });
 await evaluate(`__game.configure({ level: 12, seed: 5 }); __game.step(0.05)`);
