@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const files = ['index.html', 'style.css', 'src/platform.js', 'src/audio.js', 'src/game.js'];
+const files = ['index.html', 'favicon.ico', 'style.css', 'src/platform.js', 'src/audio.js', 'src/game.js'];
 
 for (const file of files) {
   const destination = join(root, 'dist', file);
