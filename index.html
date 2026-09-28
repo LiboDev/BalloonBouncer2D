@@ -16,18 +16,36 @@
 
     <div id="hud" class="hidden">
       <div class="hud-top">
-        <div class="pill" id="hud-level">Level 1</div>
+        <button class="icon-btn" id="btn-settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" width="44" height="44" aria-hidden="true" focusable="false">
+            <g fill="currentColor">
+              <rect x="10" y="1" width="4" height="6" rx="1" />
+              <rect x="10" y="1" width="4" height="6" rx="1" transform="rotate(45 12 12)" />
+              <rect x="10" y="1" width="4" height="6" rx="1" transform="rotate(90 12 12)" />
+              <rect x="10" y="1" width="4" height="6" rx="1" transform="rotate(135 12 12)" />
+              <rect x="10" y="1" width="4" height="6" rx="1" transform="rotate(180 12 12)" />
+              <rect x="10" y="1" width="4" height="6" rx="1" transform="rotate(225 12 12)" />
+              <rect x="10" y="1" width="4" height="6" rx="1" transform="rotate(270 12 12)" />
+              <rect x="10" y="1" width="4" height="6" rx="1" transform="rotate(315 12 12)" />
+              <path fill-rule="evenodd" d="M12 4.5a7.5 7.5 0 1 1 0 15 7.5 7.5 0 0 1 0-15zm0 4.3a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4z" />
+            </g>
+          </svg>
+        </button>
         <div class="pill coin" id="hud-money" aria-label="Coins">0</div>
-        <button class="icon-btn" id="btn-sound" aria-label="Toggle sound">🔊</button>
-        <button class="icon-btn" id="btn-speed" aria-label="Change speed">1×</button>
-      </div>
-      <div class="progress-wrap" aria-label="Balloons popped">
-        <div class="progress-track"><div id="hud-bar"></div></div>
-        <div id="hud-count">0 / 0</div>
       </div>
     </div>
 
     <div id="hint" class="hint hidden">Drag back &amp; release to fling</div>
+
+    <div id="overlay-settings" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="panel small">
+        <h2 id="settings-title">Paused</h2>
+        <p class="sub" id="settings-level">Level 1</p>
+        <button class="btn secondary" id="btn-sound" aria-pressed="true">Sound: On</button>
+        <button class="btn secondary" id="btn-speed">Speed 1&times;</button>
+        <button class="btn primary" id="btn-resume">Resume</button>
+      </div>
+    </div>
 
     <div id="overlay-title" class="overlay">
       <div class="panel">
@@ -37,29 +55,18 @@
       </div>
     </div>
 
-    <div id="overlay-results" class="overlay hidden">
+    <div id="overlay-results" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="res-title">
       <div class="panel">
         <h2 id="res-title">Nice!</h2>
         <p id="res-sub"></p>
-        <div class="results-stats">
-          <div><small>Balloons popped</small><strong id="res-popped">0/0</strong></div>
-          <div><small>Coins earned</small><strong class="coin" id="res-earned">+0</strong></div>
-        </div>
-        <div id="res-unlock" class="unlock hidden">
-          <canvas id="unlock-canvas" width="240" height="280"></canvas>
-          <div>
-            <small>Coming up next</small>
-            <strong id="unlock-name"></strong>
-            <span id="unlock-hp"></span>
-          </div>
-        </div>
-        <button class="btn primary" id="btn-to-shop">Shop &amp; continue</button>
+        <div class="pill coin big" id="res-earned" aria-label="Coins earned">+0</div>
+        <button class="btn primary" id="btn-to-shop">Next</button>
       </div>
     </div>
 
     <div id="overlay-shop" class="overlay hidden">
       <div class="panel">
-        <h2>Upgrade your launch</h2>
+        <h2>Shop</h2>
         <div class="pill coin big" id="shop-money">0</div>
         <div id="shop-list" class="shop-list"></div>
         <button class="btn primary" id="btn-next">Play next level</button>

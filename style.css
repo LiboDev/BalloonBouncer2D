@@ -4,22 +4,25 @@ html, body {
   margin: 0;
   height: 100%;
   overflow: hidden;
-  background: radial-gradient(circle at 18% 32%, #394c89 0, transparent 38%), radial-gradient(circle at 85% 72%, #603b8c 0, transparent 40%), #1b1f3a;
+  /* Top half matches the sky, bottom half the pit, so letterbox bars on tall phones blend in. */
+  background: linear-gradient(#7fd0ff 50%, #765e9f 50%);
   touch-action: none;
+  overscroll-behavior: none;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
   font-family: "Nunito", "Segoe UI Rounded", "Arial Rounded MT Bold", system-ui, sans-serif;
   color: #fff;
 }
 
-/* The stage matches the canvas world and scales uniformly into any viewport. */
+/* The stage matches the 9:16 canvas world and scales uniformly into any viewport. */
 #stage {
   position: absolute;
   left: 0;
   top: 0;
-  width: 1000px;
-  height: 1300px;
+  width: 720px;
+  height: 1280px;
   transform-origin: 0 0;
   overflow: hidden;
 }
@@ -27,14 +30,14 @@ html, body {
 #game {
   position: absolute;
   inset: 0;
-  width: 1000px;
-  height: 1300px;
+  width: 720px;
+  height: 1280px;
   display: block;
 }
 
 .hidden { display: none !important; }
 
-/* HUD */
+/* HUD: just a settings button and the coin counter. */
 #hud {
   position: absolute;
   left: 20px;
@@ -43,14 +46,9 @@ html, body {
   pointer-events: none;
 }
 
-.hud-top { display: flex; align-items: center; gap: 12px; }
-.hud-top .pill.coin { margin-left: auto; }
-.hud-top .pill { font-size: 30px; padding: 12px 20px; }
-.hud-top .pill.coin::before { width: 24px; height: 24px; margin-right: 8px; }
-.progress-wrap { display: flex; align-items: center; gap: 14px; margin-top: 14px; font-size: 26px; font-weight: 900; text-shadow: 0 2px 3px #202044; }
-.progress-track { flex: 1; height: 20px; border-radius: 20px; border: 3px solid #fff9; overflow: hidden; background: #211b52aa; }
-#hud-bar { height: 100%; width: 0%; background: linear-gradient(90deg,#ff9a3c,#ffe066); border-radius: 20px; transition: width .15s; }
-#hud-bar.passed { background: linear-gradient(90deg,#22c9a4,#b5ff8f); }
+.hud-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.hud-top .pill { font-size: 36px; padding: 12px 26px; }
+.hud-top .pill.coin::before { width: 30px; height: 30px; margin-right: 10px; }
 
 .pill {
   display: inline-block;
@@ -75,23 +73,24 @@ html, body {
   box-shadow: inset 0 0 0 3px #a86500;
 }
 
-.pill.big { font-size: 44px; margin: 8px auto 18px; }
+.pill.big { font-size: 48px; margin: 8px auto 10px; color: #ffe066; }
 
 .icon-btn {
   pointer-events: auto;
   color: #fff;
-  width: 68px;
-  height: 68px;
+  width: 88px;
+  height: 88px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 20px;
+  border-radius: 24px;
   border: 3px solid rgba(255, 255, 255, 0.3);
   background: rgba(22, 20, 58, 0.72);
   cursor: pointer;
   padding: 0;
-  font: 900 30px/1 system-ui, sans-serif;
 }
+
+.icon-btn:active { transform: scale(0.94); }
 
 .icon-btn:focus-visible, .btn:focus-visible, .buy:focus-visible {
   outline: 4px solid #ffe066;
@@ -102,9 +101,9 @@ html, body {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 230px;
+  bottom: 250px;
   text-align: center;
-  font-size: 36px;
+  font-size: 38px;
   font-weight: 800;
   text-shadow: 0 3px 0 rgba(0, 0, 0, 0.45);
   pointer-events: none;
@@ -127,10 +126,11 @@ html, body {
 }
 
 .panel {
-  width: 760px;
-  max-height: 1220px;
+  width: 660px;
+  max-height: 1240px;
   overflow-y: auto;
-  padding: 44px 36px;
+  scrollbar-width: none;
+  padding: 40px 30px;
   border-radius: 40px;
   background: linear-gradient(#3b2f86, #251c5c);
   border: 5px solid rgba(255, 255, 255, 0.2);
@@ -138,9 +138,12 @@ html, body {
   text-align: center;
 }
 
+.panel.small { width: 560px; }
+.panel.small .btn { width: 100%; min-width: 0; }
+
 h1 {
   margin: 0 0 10px;
-  font-size: 100px;
+  font-size: 96px;
   line-height: 0.95;
   font-weight: 900;
   color: #ffe066;
@@ -149,23 +152,20 @@ h1 {
 
 h2 {
   margin: 0 0 10px;
-  font-size: 68px;
+  font-size: 62px;
+  line-height: 1.05;
   font-weight: 900;
   color: #ffe066;
   text-shadow: 0 6px 0 #c2410c;
 }
 
 .tagline { font-size: 36px; font-weight: 800; margin: 16px 0 30px; }
-#res-sub, .sub { font-size: 34px; font-weight: 700; opacity: 0.9; margin: 12px 0 18px; line-height: 1.3; }
-.results-stats { display: flex; justify-content: center; gap: 18px; margin: 22px auto; }
-.results-stats > div { flex: 1; padding: 16px; border-radius: 20px; background: #17134288; }
-.results-stats small { display: block; font-size: 24px; opacity: .8; }
-.results-stats strong { display: block; font-size: 44px; color: #ffe066; }
+#res-sub, .sub { font-size: 32px; font-weight: 700; opacity: 0.9; margin: 14px 0 18px; line-height: 1.3; }
 
 .btn {
   display: block;
   margin: 24px auto 0;
-  min-width: 380px;
+  min-width: 360px;
   padding: 24px 40px;
   border: none;
   border-radius: 28px;
@@ -188,31 +188,14 @@ h2 {
 .btn:active { transform: translateY(6px); box-shadow: 0 4px 0 #b45309; }
 .btn.secondary:active { box-shadow: 0 4px 0 #2b2272; }
 
-.unlock {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 28px;
-  padding: 12px 24px;
-  margin: 6px 0;
-  text-align: left;
-}
-
-.unlock canvas { width: 120px; height: 140px; }
-.unlock small { display: block; font-size: 24px; opacity: 0.8; }
-.unlock strong { display: block; font-size: 38px; color: #9ff5ff; }
-.unlock span { font-size: 26px; font-weight: 800; }
-
 /* Shop */
-.shop-list { display: flex; flex-direction: column; gap: 12px; }
+.shop-list { display: flex; flex-direction: column; gap: 10px; }
 
 .card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 10px 16px;
+  gap: 14px;
+  padding: 6px 14px;
   border-radius: 24px;
   background: rgba(0, 0, 0, 0.25);
   text-align: left;
@@ -221,14 +204,14 @@ h2 {
 .card canvas { width: 90px; height: 90px; flex: none; }
 .card .info { flex: 1; min-width: 0; }
 .card .name { font-size: 32px; font-weight: 900; }
-.card .desc { font-size: 22px; opacity: 0.8; line-height: 1.2; }
+.card .desc { font-size: 22px; opacity: 0.85; line-height: 1.2; }
 .card .owned { font-size: 22px; font-weight: 800; color: #9ff5ff; }
 
 .card .buy {
   flex: none;
-  min-width: 150px;
-  min-height: 76px;
-  padding: 12px 16px;
+  min-width: 140px;
+  min-height: 80px;
+  padding: 12px 14px;
   border: none;
   border-radius: 20px;
   font: inherit;

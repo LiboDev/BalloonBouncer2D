@@ -8,7 +8,7 @@
 
 ## How to play
 
-Click **Play**, then drag back and release to launch. With a keyboard, use the arrow keys to adjust aim and power, then press **Space** or **Enter**. Clear at least **75%** of the balloons to advance, and spend coins on upgrades between levels.
+Click **Play**, then drag back and release to launch. With a keyboard, use the arrow keys to adjust aim and power, then press **Space** or **Enter** (**Esc** opens settings). Pop **every** balloon to advance; a failed attempt replays the same map. Spend coins on balls between levels (up to 10 of each type).
 
 ## Run and build
 

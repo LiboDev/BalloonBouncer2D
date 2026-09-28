@@ -5,59 +5,96 @@
   // Constants
   // ---------------------------------------------------------------------------
   const TAU = Math.PI * 2;
-  const W = 1000;
-  const H = 1300;
+  // 9:16 portrait world so the game fills phone screens with little letterboxing.
+  const W = 720;
+  const H = 1280;
   const G = 950;                 // gravity px/s^2
   const DT = 1 / 120;            // fixed physics step
   const MIN_BOUNCE = 640;        // every bounce leaves at least this fast
   const MAX_SPEED = 1500;
   const MIN_NORMAL_FRAC = 0.32;  // bounce always has a real "away" component (no sliding)
   const BALL_LIFETIME = 18;      // seconds before a ball fizzles out
-  const PASS_RATIO = 0.75;
-  const LAUNCH = { x: W / 2, y: H - 120 };
+  const LAUNCH = { x: W / 2, y: H - 110 };
   const LAUNCH_MIN = 750;
   const LAUNCH_MAX = 1500;
-  const DRAG_FULL = 280;         // drag distance for full power
+  const DRAG_FULL = 240;         // drag distance for full power
+  const BALL_CAP = 10;           // max owned per ball type
+  const LIGHTNING_CHAIN = 3;     // extra balloons zapped per lightning hit
+  const LIGHTNING_RANGE = 230;
+  const BUMPER_BOOST = 1.18;
   const SAVE_VERSION = 1;
   const captureParams = new URLSearchParams(location.search);
   const promoDebug = !Platform.inPlayables && captureParams.has('debug');
   const manualCapture = promoDebug && captureParams.has('capture');
 
+  // speed: launch-speed multiplier. bounce: per-bounce speed gain. minB/maxS: bounce speed floor/ceiling.
   const BALL_TYPES = {
-    ball:      { name: 'Ball',          dmg: 1,        price: 8,    r: 12, desc: '1 damage per hit', trail: '160,180,255' },
-    saw:       { name: 'Saw Blade',     dmg: 3,        price: 40,   r: 15, desc: '3 damage per hit', trail: '210,215,225' },
-    fireball:  { name: 'Fireball',      dmg: 5,        price: 150,  r: 14, desc: '5 damage + 1 dmg blast on every pop', trail: '255,140,0' },
-    lightning: { name: 'Lightning Orb', dmg: 25,       price: 600,  r: 15, desc: '25 damage per hit', trail: '120,230,255' },
-    blackhole: { name: 'Black Hole',    dmg: Infinity, price: 3000, r: 17, desc: 'Infinite damage, eats through balloons', trail: '150,90,255' },
+    ball:      { name: 'Ball',          dmg: 1,    price: 10,    r: 11, desc: '1 damage per hit', trail: '160,180,255' },
+    rubber:    { name: 'Rubber Ball',   dmg: 1,    price: 25,    r: 7,  desc: 'Tiny, super fast and extra bouncy', trail: '255,90,200',
+                 speed: 1.35, bounce: 1.1, minB: 950, maxS: 2200 },
+    saw:       { name: 'Saw Blade',     dmg: 5,    price: 100,   r: 13, desc: '5 damage per hit', trail: '210,215,225' },
+    fireball:  { name: 'Fireball',      dmg: 5,    price: 100,   r: 13, desc: '5 damage + fiery blast on every pop', trail: '255,140,0' },
+    lightning: { name: 'Lightning Orb', dmg: 25,   price: 1000,  r: 14, desc: '25 damage, chains to 3 nearby balloons', trail: '120,230,255' },
+    blackhole: { name: 'Black Hole',    dmg: 1000, price: 10000, r: 24, desc: '1,000 damage, eats through balloons', trail: '150,90,255' },
   };
-  const BALL_ORDER = ['ball', 'saw', 'fireball', 'lightning', 'blackhole'];
+  const BALL_ORDER = ['ball', 'rubber', 'saw', 'fireball', 'lightning', 'blackhole'];
 
   const BALLOON_TYPES = {
-    basic:    { name: 'Balloon',          hp: 1,   r: 28 },
-    fire:     { name: 'Fire Balloon',     hp: 1,   r: 29 },
-    ice:      { name: 'Ice Balloon',      hp: 3,   r: 30 },
-    iron:     { name: 'Iron Balloon',     hp: 5,   r: 31 },
-    stone:    { name: 'Stone Balloon',    hp: 10,  r: 33 },
-    obsidian: { name: 'Obsidian Balloon', hp: 100, r: 40 },
+    basic:    { name: 'Balloon',          hp: 1,   r: 24 },
+    fire:     { name: 'Fire Balloon',     hp: 1,   r: 25 },
+    ice:      { name: 'Ice Balloon',      hp: 3,   r: 26 },
+    iron:     { name: 'Metal Balloon',    hp: 5,   r: 27 },
+    stone:    { name: 'Stone Balloon',    hp: 10,  r: 29 },
+    obsidian: { name: 'Obsidian Balloon', hp: 100, r: 35 },
   };
-  const UNLOCK_ORDER = ['basic', 'fire', 'ice', 'iron', 'stone', 'obsidian'];
-  const WEIGHTS = { basic: 6, fire: 2.5, ice: 3, iron: 3, stone: 2.5, obsidian: 1 };
   const BASIC_COLORS = ['#ff4d6d', '#ffb703', '#3a86ff', '#ff66c4', '#2ec4b6', '#8f5cff'];
   const IRON_TILES = 10;
+
+  const WIN_LINES = [
+    'Amazing job!', 'Pop-tastic!', 'You nailed it!', 'Brilliant bouncing!', 'What a shot!',
+    'Unstoppable!', 'Balloon master!', 'Total clear!', 'You\'re on fire!', 'Spectacular!',
+    'Flawless!', 'Keep it up!', 'Legendary fling!', 'Wow, just wow!',
+  ];
+  const WIN_SUBS = [
+    'Every last balloon popped.', 'The sky is spotless.', 'Not a single balloon survived.',
+    'That was a chain reaction to remember.', 'Your aim keeps getting better.',
+  ];
+  const FAIL_LINES = ['So close!', 'Almost there!', 'Don\'t give up!', 'You\'ve got this!', 'Nice try!', 'One more go!'];
 
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
-  const rand = (a, b) => a + Math.random() * (b - a);
+  // `rnd` is swapped for a seeded generator during level generation so that
+  // retrying a level rebuilds exactly the same layout.
+  let rnd = Math.random;
+  const rand = (a, b) => a + rnd() * (b - a);
   const randInt = (a, b) => Math.floor(rand(a, b + 1));
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
   const lerp = (a, b, t) => a + (b - a) * t;
-  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const pick = (arr) => arr[Math.floor(rnd() * arr.length)];
   const fmt = (n) => Math.floor(n).toLocaleString('en-US');
+
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a = (a + 0x6d2b79f5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function levelSeed(level) {
+    let h = (save.seed ^ Math.imul(level, 0x9e3779b1)) >>> 0;
+    h = Math.imul(h ^ (h >>> 16), 0x85ebca6b) >>> 0;
+    h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
+    return (h ^ (h >>> 16)) >>> 0;
+  }
 
   function shuffle(a) {
     for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(rnd() * (i + 1));
       [a[i], a[j]] = [a[j], a[i]];
     }
     return a;
@@ -80,15 +117,15 @@
     return { x: p.x1 + dx * t, y: p.y1 + dy * t };
   }
 
-  function weightedPick(list) {
+  function weightedPick(weights) {
     let total = 0;
-    for (const t of list) total += WEIGHTS[t];
-    let r = Math.random() * total;
-    for (const t of list) {
-      r -= WEIGHTS[t];
-      if (r <= 0) return t;
+    for (const k in weights) total += weights[k];
+    let r = rnd() * total;
+    for (const k in weights) {
+      r -= weights[k];
+      if (r <= 0) return k;
     }
-    return list[0];
+    return Object.keys(weights)[0];
   }
 
   // ---------------------------------------------------------------------------
@@ -99,12 +136,12 @@
   const canvas = $('game');
   const ctx = canvas.getContext('2d');
   const ui = {
-    hud: $('hud'), level: $('hud-level'), money: $('hud-money'), bar: $('hud-bar'), count: $('hud-count'),
-    speed: $('btn-speed'), sound: $('btn-sound'), hint: $('hint'),
+    hud: $('hud'), money: $('hud-money'), settingsBtn: $('btn-settings'), hint: $('hint'),
+    settings: $('overlay-settings'), setLevel: $('settings-level'),
+    speed: $('btn-speed'), sound: $('btn-sound'), resume: $('btn-resume'),
     title: $('overlay-title'), results: $('overlay-results'), shop: $('overlay-shop'),
     play: $('btn-play'), toShop: $('btn-to-shop'), next: $('btn-next'),
-    resTitle: $('res-title'), resSub: $('res-sub'), resPopped: $('res-popped'), resEarned: $('res-earned'),
-    resUnlock: $('res-unlock'), unlockCanvas: $('unlock-canvas'), unlockName: $('unlock-name'), unlockHp: $('unlock-hp'),
+    resTitle: $('res-title'), resSub: $('res-sub'), resEarned: $('res-earned'),
     shopMoney: $('shop-money'), shopList: $('shop-list'),
   };
 
@@ -113,16 +150,18 @@
   // ---------------------------------------------------------------------------
   const save = {
     version: SAVE_VERSION,
+    seed: (Math.random() * 0x7fffffff) >>> 0,
     money: 0,
     level: 1,
-    owned: { ball: 3, saw: 0, fireball: 0, lightning: 0, blackhole: 0 },
+    owned: { ball: 3, rubber: 0, saw: 0, fireball: 0, lightning: 0, blackhole: 0 },
     speed: 1,
     muted: false,
   };
 
   let mode = 'title'; // title | aim | play | results | shop
+  let settingsOpen = false;
   let currentLevel = 1;
-  let balloons = [], platforms = [], balls = [], shards = [], particles = [], explosions = [];
+  let balloons = [], platforms = [], bumpers = [], balls = [], shards = [], particles = [], explosions = [];
   let launchQueue = [], launchClock = 0;
   let stats = { total: 0, popped: 0, earned: 0 };
   const aim = { angle: -Math.PI / 2 - 0.25, power: 0.75 };
@@ -143,12 +182,13 @@
     if (!data || data.version !== SAVE_VERSION) return;
     if (Number.isFinite(data.money) && data.money >= 0) save.money = data.money;
     if (Number.isInteger(data.level) && data.level >= 1) save.level = data.level;
+    if (Number.isInteger(data.seed) && data.seed >= 0) save.seed = data.seed >>> 0;
     if ([1, 2, 3].includes(data.speed)) save.speed = data.speed;
     save.muted = !!data.muted;
     if (data.owned) {
       for (const k of BALL_ORDER) {
         const v = data.owned[k];
-        if (Number.isInteger(v) && v >= 0) save.owned[k] = v;
+        if (Number.isInteger(v) && v >= 0) save.owned[k] = Math.min(v, BALL_CAP);
       }
     }
     if (totalBalls() === 0) save.owned.ball = 1;
@@ -177,7 +217,7 @@
         y += Math.sin(a) * len;
         pts.push([x, y]);
         if (s === 1 && !branch) {
-          const ba = a + (Math.random() < 0.5 ? 0.9 : -0.9);
+          const ba = a + (rnd() < 0.5 ? 0.9 : -0.9);
           branch = [[x, y], [x + Math.cos(ba) * 0.25, y + Math.sin(ba) * 0.25]];
         }
       }
@@ -198,8 +238,8 @@
       b.cracks = makeCracks(10);
       b.speckles = [];
       for (let i = 0; i < 16; i++) {
-        const a = rand(0, TAU), d = Math.sqrt(Math.random()) * 0.85;
-        b.speckles.push({ x: Math.cos(a) * d, y: Math.sin(a) * d, r: rand(0.04, 0.1), light: Math.random() < 0.5 });
+        const a = rand(0, TAU), d = Math.sqrt(rnd()) * 0.85;
+        b.speckles.push({ x: Math.cos(a) * d, y: Math.sin(a) * d, r: rand(0.04, 0.1), light: rnd() < 0.5 });
       }
     }
     if (type === 'obsidian') {
@@ -219,77 +259,135 @@
   }
 
   function generateLevel(level) {
-    platforms = [];
-    balloons = [];
+    // Seeded so that a retry rebuilds exactly the same map.
+    rnd = mulberry32(levelSeed(level));
+    try {
+      buildObstacles();
+      placeBalloons(levelMix(level));
+    } finally {
+      rnd = Math.random;
+    }
+    stats = { total: balloons.length, popped: 0, earned: 0 };
+  }
 
-    const nPlat = randInt(3, 6);
-    let tries = 0;
-    while (platforms.length < nPlat && tries++ < 400) {
-      const len = rand(150, 300);
-      const ang = Math.random() < 0.7 ? rand(-0.4, 0.4) : rand(-0.9, 0.9);
-      const cx = rand(110, W - 110);
-      const cy = rand(260, H - 340);
-      const hx = (Math.cos(ang) * len) / 2, hy = (Math.sin(ang) * len) / 2;
-      const p = { x1: cx - hx, y1: cy - hy, x2: cx + hx, y2: cy + hy, t: 20, cx, cy, flash: 0 };
-      if (p.x1 < 30 || p.x2 > W - 30) continue;
-      if (platforms.some((q) => Math.hypot(q.cx - cx, q.cy - cy) < 230)) continue;
-      // Keep the launch lane open so the first flight isn't instantly deflected into the pit.
-      if (Math.max(p.y1, p.y2) > H - 640 && p.x1 < LAUNCH.x + 160 && p.x2 > LAUNCH.x - 160) continue;
-      platforms.push(p);
+  // Balloon roster by level tier:
+  //   1-3   a handful of basic balloons
+  //   4-10  lots of basic plus a few ice and fire
+  //   11-19 more balloons, adding metal (iron) and stone
+  //   20+   obsidian joins the mix
+  function levelMix(level) {
+    const types = [];
+    const add = (type, n) => { for (let i = 0; i < n; i++) types.push(type); };
+
+    if (level <= 3) {
+      add('basic', [4, 5, 7][level - 1]);
+    } else if (level <= 10) {
+      const count = 12 + (level - 4) * 2;           // 12..24
+      const specials = 2 + Math.floor((level - 4) / 2); // 2..5
+      add('ice', 1);
+      add('fire', 1);
+      for (let i = 2; i < specials; i++) types.push(rnd() < 0.5 ? 'ice' : 'fire');
+      add('basic', count - specials);
+    } else {
+      const late = level >= 20;
+      const count = late ? Math.min(42 + Math.floor((level - 20) / 2), 48) : Math.min(24 + (level - 10) * 2, 42);
+      const t = late ? 1 : (level - 11) / 8;
+      const obsidian = late ? Math.min(1 + Math.floor((level - 20) / 3), 5) : 0;
+      const heavy = Math.round(count * (late ? Math.min(0.3 + (level - 20) * 0.01, 0.4) : 0.1 + 0.2 * t));
+      const mid = Math.round(count * (0.2 + 0.06 * t));
+      add('obsidian', obsidian);
+      // Guarantee at least one of each heavy type so the new balloons are obvious.
+      add('iron', 1);
+      add('stone', 1);
+      for (let i = 2; i < heavy; i++) types.push(weightedPick({ iron: 1.2 - 0.4 * t, stone: 0.6 + 0.4 * t }));
+      for (let i = 0; i < mid; i++) types.push(rnd() < 0.5 ? 'ice' : 'fire');
+      add('basic', Math.max(0, count - types.length));
+    }
+    return types;
+  }
+
+  function segObstacle(kind, cx, cy, len, ang, t) {
+    const hx = (Math.cos(ang) * len) / 2, hy = (Math.sin(ang) * len) / 2;
+    return { kind, x1: cx - hx, y1: cy - hy, x2: cx + hx, y2: cy + hy, t, cx, cy, flash: 0 };
+  }
+
+  function inLaunchLane(x0, y0, x1, y1) {
+    return y1 > H - 620 && x0 < LAUNCH.x + 120 && x1 > LAUNCH.x - 120;
+  }
+
+  function buildObstacles() {
+    platforms = [];
+    bumpers = [];
+
+    // ~5 obstacles per map: always at least one platform, wall and bumper.
+    const n = randInt(4, 6);
+    const kinds = ['platform', 'wall', 'bumper'];
+    while (kinds.length < n) kinds.push(weightedPick({ platform: 1, wall: 0.7, bumper: 1 }));
+    shuffle(kinds);
+
+    const centers = [];
+    for (const kind of kinds) {
+      for (let tries = 0; tries < 200; tries++) {
+        let o, box;
+        if (kind === 'bumper') {
+          const r = rand(26, 34);
+          const cx = rand(70 + r, W - 70 - r), cy = rand(210, H - 480);
+          o = { cx, cy, r, flash: 0, pulse: 0 };
+          box = [cx - r, cy - r, cx + r, cy + r];
+        } else if (kind === 'wall') {
+          const len = rand(130, 190);
+          o = segObstacle('wall', rand(110, W - 110), rand(230, H - 520), len, Math.PI / 2 + rand(-0.18, 0.18), 22);
+        } else {
+          const len = rand(120, 180);
+          const ang = rnd() < 0.7 ? rand(-0.4, 0.4) : rand(-0.8, 0.8);
+          o = segObstacle('platform', rand(90, W - 90), rand(210, H - 500), len, ang, 18);
+        }
+        if (!box) {
+          if (Math.min(o.x1, o.x2) < 30 || Math.max(o.x1, o.x2) > W - 30) continue;
+          box = [Math.min(o.x1, o.x2), Math.min(o.y1, o.y2), Math.max(o.x1, o.x2), Math.max(o.y1, o.y2)];
+        }
+        if (centers.some(([x, y]) => Math.hypot(x - o.cx, y - o.cy) < 175)) continue;
+        if (inLaunchLane(box[0], box[1], box[2], box[3])) continue;
+        centers.push([o.cx, o.cy]);
+        (kind === 'bumper' ? bumpers : platforms).push(o);
+        break;
+      }
     }
 
     // Low side ledges catch falling balls and bounce them back into the field.
     // The middle stays open so balls can still fall off the map.
     for (const side of [-1, 1]) {
-      const len = rand(250, 320);
-      const y = rand(H - 280, H - 210);
-      const tilt = rand(20, 55); // inner end lower -> bounces lean toward the center
-      const outer = side < 0 ? rand(20, 60) : W - rand(20, 60);
+      const len = rand(150, 185);
+      const y = rand(H - 270, H - 215);
+      const tilt = rand(20, 45); // inner end lower -> bounces lean toward the center
+      const outer = side < 0 ? rand(15, 40) : W - rand(15, 40);
       const inner = outer - side * len;
       const p = side < 0
         ? { x1: outer, y1: y - tilt / 2, x2: inner, y2: y + tilt / 2 }
         : { x1: inner, y1: y + tilt / 2, x2: outer, y2: y - tilt / 2 };
-      Object.assign(p, { t: 20, cx: (p.x1 + p.x2) / 2, cy: y, flash: 0 });
+      Object.assign(p, { kind: 'ledge', t: 18, cx: (p.x1 + p.x2) / 2, cy: y, flash: 0 });
       platforms.push(p);
     }
+  }
 
-    const unlocked = UNLOCK_ORDER.slice(0, Math.min(level, UNLOCK_ORDER.length));
-    const newest = unlocked[unlocked.length - 1];
-    const count = Math.min(10 + (level - 1) * 3, 48);
-    const obsCap = level >= 6 ? 1 + Math.floor((level - 6) / 2) : 0;
-
-    const types = [];
-    if (newest !== 'basic') {
-      const guaranteed = newest === 'obsidian' ? 1 : 2;
-      for (let i = 0; i < guaranteed; i++) types.push(newest);
-    }
-    let obs = types.filter((t) => t === 'obsidian').length;
-    while (types.length < count) {
-      const t = weightedPick(unlocked);
-      if (t === 'obsidian') {
-        if (obs >= obsCap) continue;
-        obs++;
-      }
-      types.push(t);
-    }
+  function placeBalloons(types) {
+    balloons = [];
     types.sort((a, b) => BALLOON_TYPES[b].r - BALLOON_TYPES[a].r); // place big ones first
-
     for (const type of types) {
       const r = BALLOON_TYPES[type].r;
-      for (let k = 0; k < 250; k++) {
-        const x = rand(r + 25, W - r - 25);
-        const y = rand(110 + r, H - 380);
-        if (balloons.some((o) => Math.hypot(o.x - x, o.baseY - y) < o.r + r + 14)) continue;
+      for (let k = 0; k < 300; k++) {
+        const x = rand(r + 18, W - r - 18);
+        const y = rand(125 + r, H - 430);
+        if (balloons.some((o) => Math.hypot(o.x - x, o.baseY - y) < o.r + r + 12)) continue;
         if (platforms.some((p) => {
           const c = closestOnSeg(x, y, p);
-          return Math.hypot(c.x - x, c.y - y) < r + p.t / 2 + 14;
+          return Math.hypot(c.x - x, c.y - y) < r + p.t / 2 + 16;
         })) continue;
+        if (bumpers.some((q) => Math.hypot(q.cx - x, q.cy - y) < r + q.r + 18)) continue;
         balloons.push(makeBalloon(type, x, y));
         break;
       }
     }
-
-    stats = { total: balloons.length, popped: 0, earned: 0 };
   }
 
   // ---------------------------------------------------------------------------
@@ -324,15 +422,30 @@
     addP({ x, y, kind: 'ring', size: r * 1.8, color, max: 0.3 });
   }
 
-  function bolt(x1, y1, x2, y2) {
+  function bolt(x1, y1, x2, y2, width = 3, life = 0.22) {
     const pts = [[x1, y1]];
-    const segs = 7;
+    const len = Math.hypot(x2 - x1, y2 - y1);
+    const segs = Math.max(4, Math.round(len / 22));
+    const jit = Math.min(16, 4 + len * 0.06);
     for (let i = 1; i < segs; i++) {
       const t = i / segs;
-      pts.push([lerp(x1, x2, t) + rand(-14, 14), lerp(y1, y2, t) + rand(-14, 14)]);
+      pts.push([lerp(x1, x2, t) + rand(-jit, jit), lerp(y1, y2, t) + rand(-jit, jit)]);
     }
     pts.push([x2, y2]);
-    addP({ kind: 'bolt', pts, max: 0.18, color: '#c8faff' });
+    addP({ kind: 'bolt', pts, max: life, size: width, color: '#c8faff' });
+  }
+
+  // Flames licking off a fireball whenever it touches something.
+  function fireSplash(x, y, nx, ny, n = 12) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.atan2(ny, nx) + rand(-1.2, 1.2);
+      const sp = rand(90, 300);
+      addP({
+        x: x + rand(-4, 4), y: y + rand(-4, 4), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 60,
+        kind: 'flame', color: pick(['#fff3b0', '#ffd166', '#ff8a00', '#ff5400']),
+        size: rand(4, 8), max: rand(0.25, 0.5), drag: 3, g: -220,
+      });
+    }
   }
 
   function addShake(v) {
@@ -416,7 +529,7 @@
 
       case 'fire':
         burst(b.x, b.y, 10, { kind: 'scrap', speed: [150, 380], color: ['#ff8a00', '#b8141f'], size: [6, 11], life: [0.5, 0.9], g: G * 0.5, drag: 1.5 });
-        queueExplosion(b.x, b.y, 135, 3, 0.07, true);
+        queueExplosion(b.x, b.y, 120, 3, 0.07, true);
         Sfx.pop();
         break;
 
@@ -475,8 +588,8 @@
     }
   }
 
-  function queueExplosion(x, y, r, dmg, delay, big) {
-    explosions.push({ x, y, r, dmg, t: delay, big });
+  function queueExplosion(x, y, r, dmg, delay, big, shakeAmt) {
+    explosions.push({ x, y, r, dmg, t: delay, big, shake: shakeAmt ?? (big ? 12 : 4) });
   }
 
   function detonate(e) {
@@ -485,7 +598,7 @@
     addP({ x: e.x, y: e.y, kind: 'ring', size: s, color: '#fff3b0', max: e.big ? 0.35 : 0.22 });
     burst(e.x, e.y, e.big ? 22 : 8, { kind: 'ember', speed: [150, e.big ? 520 : 300], color: ['#ffd166', '#ff8a00', '#ff5400', '#fff3b0'], size: [2, 5], life: [0.3, 0.7], drag: 2.5, g: 200 });
     if (e.big) burst(e.x, e.y, 8, { kind: 'smoke', speed: [30, 110], color: '#6b5b73', size: [18, 30], life: [0.6, 1.1], up: -40 });
-    addShake(e.big ? 12 : 4);
+    addShake(e.shake);
     Sfx.boom(e.big);
 
     for (const bl of balloons) {
@@ -516,7 +629,7 @@
       o.vy -= 2 * vn * ny;
     }
     const sp = Math.hypot(o.vx, o.vy);
-    const target = clamp(sp, MIN_BOUNCE, MAX_SPEED);
+    const target = clamp(sp * o.gain, o.minB, o.maxS);
     vn = o.vx * nx + o.vy * ny;
     let tx = o.vx - vn * nx, ty = o.vy - vn * ny;
     const tl = Math.hypot(tx, ty);
@@ -538,7 +651,7 @@
 
   function kick(b) {
     const a = -Math.PI / 2 + rand(-1, 1);
-    const sp = MIN_BOUNCE * 1.3;
+    const sp = b.minB * 1.3;
     b.vx = Math.cos(a) * sp;
     b.vy = Math.sin(a) * sp;
   }
@@ -546,13 +659,14 @@
   function spawnBall(type) {
     const def = BALL_TYPES[type];
     const a = aim.angle + rand(-0.05, 0.05);
-    const sp = lerp(LAUNCH_MIN, LAUNCH_MAX, aim.power) * rand(0.95, 1.05);
+    const sp = lerp(LAUNCH_MIN, LAUNCH_MAX, aim.power) * (def.speed || 1) * rand(0.95, 1.05);
     const muzzle = 60;
     balls.push({
       type, r: def.r, dmg: def.dmg,
+      gain: def.bounce || 1, minB: def.minB || MIN_BOUNCE, maxS: def.maxS || MAX_SPEED,
       x: LAUNCH.x + Math.cos(aim.angle) * muzzle, y: LAUNCH.y + Math.sin(aim.angle) * muzzle,
       vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
-      life: 0, rot: 0, hits: new Map(), trail: [], dead: false,
+      life: 0, rot: 0, hits: new Map(), trail: [], dead: false, flash: 0, fxT: -1,
       ax: LAUNCH.x, ay: LAUNCH.y, anchorT: simTime,
     });
     burst(LAUNCH.x + Math.cos(aim.angle) * muzzle, LAUNCH.y + Math.sin(aim.angle) * muzzle, 5,
@@ -560,54 +674,111 @@
     Sfx.launch();
   }
 
+  // Called for every contact a ball makes (border, obstacle, balloon).
+  function touch(b, nx, ny) {
+    if (b.type !== 'fireball' || simTime - b.fxT < 0.035) return;
+    b.fxT = simTime;
+    fireSplash(b.x - nx * b.r, b.y - ny * b.r, nx, ny);
+    Sfx.sizzle();
+  }
+
+  function lightningChain(ball, bl) {
+    const targets = [];
+    for (const o of balloons) {
+      if (!o.alive || o === bl) continue;
+      const d = Math.hypot(o.x - bl.x, o.y - bl.y);
+      if (d < LIGHTNING_RANGE) targets.push([d, o]);
+    }
+    targets.sort((a, b) => a[0] - b[0]);
+    for (const [, o] of targets.slice(0, LIGHTNING_CHAIN)) {
+      bolt(bl.x, bl.y, o.x, o.y, 3.5, 0.28);
+      bolt(bl.x, bl.y, o.x, o.y, 1.5, 0.2);
+      burst(o.x, o.y, 6, { kind: 'ember', speed: [120, 320], color: ['#c8faff', '#5ee7ff', '#ffffff'], size: [2, 4], life: [0.15, 0.3] });
+      damageBalloon(o, ball.dmg);
+    }
+  }
+
   function hitBalloon(ball, bl) {
     const popped = damageBalloon(bl, ball.dmg);
     switch (ball.type) {
       case 'fireball':
-        if (popped) queueExplosion(bl.x, bl.y, 85, 1, 0, false);
-        burst(ball.x, ball.y, 5, { kind: 'ember', speed: [80, 220], color: ['#ffd166', '#ff8a00'], size: [2, 4], life: [0.2, 0.4] });
+        // Same fiery blast as a fire balloon, a bit smaller and weaker.
+        if (popped) queueExplosion(bl.x, bl.y, 95, 1, 0, true, 6);
         break;
       case 'lightning':
-        for (let i = 0; i < 3; i++) bolt(ball.x, ball.y, bl.x + rand(-bl.r, bl.r), bl.y + rand(-bl.r, bl.r));
-        burst(bl.x, bl.y, 8, { kind: 'ember', speed: [150, 400], color: ['#c8faff', '#5ee7ff'], size: [2, 4], life: [0.15, 0.3] });
+        ball.flash = 1;
+        addP({ x: ball.x, y: ball.y, kind: 'flash', size: ball.r * 4, color: '#9ff5ff', max: 0.18 });
+        for (let i = 0; i < 3; i++) bolt(ball.x, ball.y, bl.x + rand(-bl.r, bl.r) * 0.6, bl.y + rand(-bl.r, bl.r) * 0.6, 3.5, 0.25);
+        burst(bl.x, bl.y, 10, { kind: 'ember', speed: [150, 400], color: ['#c8faff', '#5ee7ff', '#ffffff'], size: [2, 4], life: [0.15, 0.3] });
+        lightningChain(ball, bl);
         Sfx.zap();
         break;
       case 'saw':
         burst(ball.x, ball.y, 6, { speed: [200, 450], color: ['#fff3b0', '#ffffff'], size: [2, 3], life: [0.12, 0.25] });
         break;
       case 'blackhole':
-        burst(bl.x, bl.y, 8, { kind: 'ember', speed: [60, 200], color: ['#b388ff', '#ff7ad9'], size: [2, 4], life: [0.3, 0.5] });
+        burst(bl.x, bl.y, 12, { kind: 'ember', speed: [60, 200], color: ['#b388ff', '#ff7ad9', '#ffffff'], size: [2, 4], life: [0.3, 0.5] });
+        addP({ x: bl.x, y: bl.y, kind: 'ring', size: bl.r * 1.4, color: '#b388ff', max: 0.3 });
+        break;
+      case 'rubber':
+        Sfx.boing();
         break;
     }
   }
 
-  function stepBall(b, dt) {
+  function collideSegment(b, p) {
+    const c = closestOnSeg(b.x, b.y, p);
+    let dx = b.x - c.x, dy = b.y - c.y;
+    const rr = b.r + p.t / 2;
+    const d2 = dx * dx + dy * dy;
+    if (d2 >= rr * rr) return;
+    let d = Math.sqrt(d2);
+    if (d < 1e-4) { dx = 0; dy = -1; d = 1; }
+    const nx = dx / d, ny = dy / d;
+    b.x = c.x + nx * rr;
+    b.y = c.y + ny * rr;
+    bounce(b, nx, ny);
+    touch(b, nx, ny);
+    p.flash = 1;
+    if (b.type === 'rubber') Sfx.boing(); else Sfx.bonk();
+  }
+
+  // Pinball-style bumper: bounces the ball away and boosts its speed.
+  function collideBumper(b, q) {
+    let dx = b.x - q.cx, dy = b.y - q.cy;
+    const rr = b.r + q.r;
+    const d2 = dx * dx + dy * dy;
+    if (d2 >= rr * rr) return;
+    let d = Math.sqrt(d2);
+    if (d < 1e-4) { dx = 0; dy = -1; d = 1; }
+    const nx = dx / d, ny = dy / d;
+    b.x = q.cx + nx * rr;
+    b.y = q.cy + ny * rr;
+    bounce(b, nx, ny);
+    const sp = Math.hypot(b.vx, b.vy);
+    const boosted = clamp(sp * BUMPER_BOOST, 1150, Math.max(b.maxS, 1650));
+    b.vx *= boosted / sp;
+    b.vy *= boosted / sp;
+    touch(b, nx, ny);
+    q.flash = 1;
+    q.pulse = 1;
+    addP({ x: q.cx, y: q.cy, kind: 'ring', size: q.r * 1.7, color: '#fff3b0', max: 0.25 });
+    burst(b.x - nx * b.r, b.y - ny * b.r, 6, { speed: [150, 350], color: ['#fff3b0', '#ffd166', '#ffffff'], size: [2, 4], life: [0.15, 0.3] });
+    Sfx.boing();
+  }
+
+  function substepBall(b, dt) {
     b.vy += G * dt;
     b.x += b.vx * dt;
     b.y += b.vy * dt;
-    b.life += dt;
 
     // Walls and ceiling (floor is open: fall off the map)
-    if (b.x < b.r) { b.x = b.r; bounce(b, 1, 0); }
-    else if (b.x > W - b.r) { b.x = W - b.r; bounce(b, -1, 0); }
-    if (b.y < b.r) { b.y = b.r; bounce(b, 0, 1); }
+    if (b.x < b.r) { b.x = b.r; bounce(b, 1, 0); touch(b, 1, 0); }
+    else if (b.x > W - b.r) { b.x = W - b.r; bounce(b, -1, 0); touch(b, -1, 0); }
+    if (b.y < b.r) { b.y = b.r; bounce(b, 0, 1); touch(b, 0, 1); }
 
-    for (const p of platforms) {
-      const c = closestOnSeg(b.x, b.y, p);
-      let dx = b.x - c.x, dy = b.y - c.y;
-      const rr = b.r + p.t / 2;
-      const d2 = dx * dx + dy * dy;
-      if (d2 < rr * rr) {
-        let d = Math.sqrt(d2);
-        if (d < 1e-4) { dx = 0; dy = -1; d = 1; }
-        const nx = dx / d, ny = dy / d;
-        b.x = c.x + nx * rr;
-        b.y = c.y + ny * rr;
-        bounce(b, nx, ny);
-        p.flash = 1;
-        Sfx.bonk();
-      }
-    }
+    for (const p of platforms) collideSegment(b, p);
+    for (const q of bumpers) collideBumper(b, q);
 
     for (const bl of balloons) {
       if (!bl.alive) continue;
@@ -615,19 +786,27 @@
       const rr = b.r + bl.r;
       const d2 = dx * dx + dy * dy;
       if (d2 >= rr * rr) continue;
+      const d = Math.sqrt(d2) || 1;
+      const nx = d2 > 0 ? dx / d : 0, ny = d2 > 0 ? dy / d : -1;
       const lastHit = b.hits.get(bl.id);
       if (lastHit === undefined || simTime - lastHit > 0.1) {
         b.hits.set(bl.id, simTime);
+        touch(b, nx, ny);
         hitBalloon(b, bl);
       }
       if (b.type !== 'blackhole') {
-        const d = Math.sqrt(d2) || 1;
-        const nx = d2 > 0 ? dx / d : 0, ny = d2 > 0 ? dy / d : -1;
         b.x = bl.x + nx * rr;
         b.y = bl.y + ny * rr;
         bounce(b, nx, ny);
       }
     }
+  }
+
+  function stepBall(b, dt) {
+    b.life += dt;
+    // Substep fast balls so they can't tunnel through thin obstacles.
+    const n = clamp(Math.ceil((Math.hypot(b.vx, b.vy) * dt) / (b.r * 0.5)), 1, 10);
+    for (let i = 0; i < n; i++) substepBall(b, dt / n);
 
     // Anti-stuck: if a ball hasn't really moved in a while, launch it.
     if (simTime - b.anchorT > 0.9) {
@@ -659,6 +838,11 @@
       const c = closestOnSeg(s.x, s.y, p);
       if (Math.hypot(s.x - c.x, s.y - c.y) < s.r + p.t / 2) {
         s.dead = true; p.flash = 0.6; breakFx(); return;
+      }
+    }
+    for (const q of bumpers) {
+      if (Math.hypot(s.x - q.cx, s.y - q.cy) < s.r + q.r) {
+        s.dead = true; q.flash = 0.6; breakFx(); return;
       }
     }
     for (const bl of balloons) {
@@ -733,13 +917,29 @@
       }
     }
     for (const p of platforms) p.flash = Math.max(0, p.flash - dt * 5);
+    for (const q of bumpers) {
+      q.flash = Math.max(0, q.flash - dt * 5);
+      q.pulse = Math.max(0, q.pulse - dt * 6);
+    }
 
     for (const b of balls) {
       b.rot += dt * (b.type === 'saw' ? 24 : b.type === 'blackhole' ? 5 : 3);
+      b.flash = Math.max(0, b.flash - dt * 5);
       b.trail.push([b.x, b.y]);
       if (b.trail.length > 9) b.trail.shift();
       if (b.type === 'fireball' && Math.random() < dt * 40) {
         addP({ x: b.x + rand(-5, 5), y: b.y + rand(-5, 5), vx: -b.vx * 0.1, vy: -b.vy * 0.1 - 30, kind: 'ember', color: pick(['#ffd166', '#ff8a00', '#ff5400']), size: rand(2, 4.5), max: rand(0.25, 0.5) });
+      }
+      if (b.type === 'blackhole' && Math.random() < dt * 30) {
+        // Matter spiralling into the event horizon.
+        const a = rand(0, TAU), d = b.r * rand(2.2, 3.2);
+        const inward = rand(90, 150);
+        addP({
+          x: b.x + Math.cos(a) * d, y: b.y + Math.sin(a) * d,
+          vx: b.vx - Math.cos(a) * inward - Math.sin(a) * inward * 1.3,
+          vy: b.vy - Math.sin(a) * inward + Math.cos(a) * inward * 1.3,
+          kind: 'ember', color: pick(['#b388ff', '#ff7ad9', '#8c5cff', '#ffffff']), size: rand(1.5, 3), max: d / 300,
+        });
       }
     }
 
@@ -782,6 +982,36 @@
 
   function drawPlatform(c, p) {
     c.lineCap = 'round';
+    if (p.kind === 'wall') {
+      // Chunky stone wall with brick seams.
+      const len = Math.hypot(p.x2 - p.x1, p.y2 - p.y1);
+      const ang = Math.atan2(p.y2 - p.y1, p.x2 - p.x1);
+      c.save();
+      c.translate(p.cx, p.cy);
+      c.rotate(ang);
+      const hl = len / 2 + p.t / 2, ht = p.t / 2;
+      c.fillStyle = '#2a2233';
+      c.beginPath(); c.roundRect(-hl - 3, -ht - 3, hl * 2 + 6, ht * 2 + 6, 8); c.fill();
+      const g = c.createLinearGradient(0, -ht, 0, ht);
+      const base = p.flash > 0 ? shade('#8a7f96', p.flash * 0.45) : '#8a7f96';
+      g.addColorStop(0, base); g.addColorStop(1, '#5a5066');
+      c.fillStyle = g;
+      c.beginPath(); c.roundRect(-hl, -ht, hl * 2, ht * 2, 6); c.fill();
+      c.strokeStyle = 'rgba(30,20,40,0.55)';
+      c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(-hl + 4, 0); c.lineTo(hl - 4, 0);
+      const brick = 34;
+      for (let x = -hl + brick; x < hl - 6; x += brick) {
+        c.moveTo(x, -ht + 2); c.lineTo(x, 0);
+        c.moveTo(x - brick / 2, 0); c.lineTo(x - brick / 2, ht - 2);
+      }
+      c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.25)';
+      c.fillRect(-hl + 5, -ht + 2, hl * 2 - 10, 3);
+      c.restore();
+      return;
+    }
     c.strokeStyle = '#232a4a';
     c.lineWidth = p.t + 6;
     c.beginPath(); c.moveTo(p.x1, p.y1); c.lineTo(p.x2, p.y2); c.stroke();
@@ -792,6 +1022,49 @@
     c.strokeStyle = 'rgba(255,255,255,0.35)';
     c.lineWidth = 4;
     c.beginPath(); c.moveTo(p.x1, p.y1 - p.t * 0.2); c.lineTo(p.x2, p.y2 - p.t * 0.2); c.stroke();
+  }
+
+  // Pinball bumper: bright ring and star cap that pulses when struck.
+  function drawBumper(c, q, t) {
+    const s = 1 + 0.18 * q.pulse;
+    const r = q.r * s;
+    c.save();
+    c.translate(q.cx, q.cy);
+    if (q.flash > 0) {
+      c.globalCompositeOperation = 'lighter';
+      const glow = c.createRadialGradient(0, 0, r * 0.6, 0, 0, r * 2);
+      glow.addColorStop(0, `rgba(255,220,120,${0.6 * q.flash})`);
+      glow.addColorStop(1, 'rgba(255,120,60,0)');
+      c.fillStyle = glow;
+      c.beginPath(); c.arc(0, 0, r * 2, 0, TAU); c.fill();
+      c.globalCompositeOperation = 'source-over';
+    }
+    c.fillStyle = '#3b1030';
+    c.beginPath(); c.arc(0, 0, r + 4, 0, TAU); c.fill();
+    const ring = c.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.2, 0, 0, r);
+    ring.addColorStop(0, '#ff9ecb'); ring.addColorStop(0.7, '#ff2e7e'); ring.addColorStop(1, '#a3124f');
+    c.fillStyle = ring;
+    c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill();
+    // Chasing lights around the rim
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * TAU;
+      const on = (Math.floor(t * 6) + i) % 2 === 0 || q.flash > 0.3;
+      c.fillStyle = on ? '#fff3b0' : '#7a1840';
+      c.beginPath(); c.arc(Math.cos(a) * r * 0.82, Math.sin(a) * r * 0.82, r * 0.09, 0, TAU); c.fill();
+    }
+    const cap = c.createRadialGradient(-r * 0.15, -r * 0.2, r * 0.05, 0, 0, r * 0.6);
+    cap.addColorStop(0, '#ffffff'); cap.addColorStop(1, q.flash > 0 ? '#ffe066' : '#ffd23f');
+    c.fillStyle = cap;
+    c.beginPath(); c.arc(0, 0, r * 0.58, 0, TAU); c.fill();
+    c.fillStyle = '#ff2e7e';
+    c.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i / 10) * TAU;
+      const rr = i % 2 === 0 ? r * 0.4 : r * 0.17;
+      i ? c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : c.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
+    }
+    c.closePath(); c.fill();
+    c.restore();
   }
 
   function drawCracks(c, b, color, width, glow) {
@@ -993,7 +1266,7 @@
     c.restore();
   }
 
-  function drawBall(c, type, x, y, r, rot) {
+  function drawBall(c, type, x, y, r, rot, flash) {
     c.save();
     c.translate(x, y);
     switch (type) {
@@ -1045,18 +1318,20 @@
         break;
       }
       case 'lightning': {
+        const f = flash || 0;
         c.globalCompositeOperation = 'lighter';
-        const glow = c.createRadialGradient(0, 0, r * 0.4, 0, 0, r * 2.4);
-        glow.addColorStop(0, 'rgba(120,230,255,0.6)'); glow.addColorStop(1, 'rgba(60,120,255,0)');
+        const glow = c.createRadialGradient(0, 0, r * 0.4, 0, 0, r * (2.4 + f * 1.6));
+        glow.addColorStop(0, `rgba(120,230,255,${0.6 + f * 0.4})`); glow.addColorStop(1, 'rgba(60,120,255,0)');
         c.fillStyle = glow;
-        c.beginPath(); c.arc(0, 0, r * 2.4, 0, TAU); c.fill();
+        c.beginPath(); c.arc(0, 0, r * (2.4 + f * 1.6), 0, TAU); c.fill();
+        // Sparks jumping off the orb
         c.strokeStyle = '#d8fdff'; c.lineWidth = 2;
-        for (let i = 0; i < 3; i++) {
-          let a = rand(0, TAU), px = Math.cos(a) * r * 0.6, py = Math.sin(a) * r * 0.6;
-          c.beginPath(); c.moveTo(px, py);
+        for (let i = 0; i < 3 + Math.round(f * 3); i++) {
+          let a = Math.random() * TAU;
+          c.beginPath(); c.moveTo(Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.9);
           for (let k = 1; k <= 3; k++) {
-            const d = r * (0.6 + k * 0.35);
-            a += rand(-0.5, 0.5);
+            const d = r * (0.9 + k * (0.3 + f * 0.25));
+            a += (Math.random() - 0.5);
             c.lineTo(Math.cos(a) * d, Math.sin(a) * d);
           }
           c.stroke();
@@ -1066,27 +1341,75 @@
         g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, '#6ff0ff'); g.addColorStop(1, '#2a6fff');
         c.fillStyle = g;
         c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill();
+        // Electricity crawling across the surface
+        c.save();
+        c.beginPath(); c.arc(0, 0, r, 0, TAU); c.clip();
+        c.globalCompositeOperation = 'lighter';
+        c.lineJoin = 'round';
+        for (let i = 0; i < 3; i++) {
+          const a0 = Math.random() * TAU, a1 = a0 + Math.PI * (0.6 + Math.random() * 0.8);
+          const x0 = Math.cos(a0) * r, y0 = Math.sin(a0) * r, x1 = Math.cos(a1) * r, y1 = Math.sin(a1) * r;
+          c.strokeStyle = i === 0 ? '#ffffff' : '#bff8ff';
+          c.lineWidth = i === 0 ? 2 : 1.4;
+          c.beginPath(); c.moveTo(x0, y0);
+          for (let k = 1; k < 5; k++) {
+            const t = k / 5;
+            c.lineTo(lerp(x0, x1, t) + (Math.random() - 0.5) * r * 0.5, lerp(y0, y1, t) + (Math.random() - 0.5) * r * 0.5);
+          }
+          c.lineTo(x1, y1);
+          c.stroke();
+        }
+        c.restore();
+        if (f > 0) {
+          c.globalAlpha = f * 0.85;
+          c.fillStyle = '#ffffff';
+          c.beginPath(); c.arc(0, 0, r * (1 + f * 0.25), 0, TAU); c.fill();
+          c.globalAlpha = 1;
+        }
+        break;
+      }
+      case 'rubber': {
+        const g = c.createRadialGradient(-r * 0.35, -r * 0.35, r * 0.1, 0, 0, r);
+        g.addColorStop(0, '#ffd6f2'); g.addColorStop(0.5, '#ff4fc3'); g.addColorStop(1, '#b0127e');
+        c.fillStyle = g;
+        c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill();
+        c.rotate(rot * 3);
+        c.strokeStyle = '#ffe066'; c.lineWidth = r * 0.3;
+        c.beginPath(); c.arc(0, 0, r * 0.55, -0.7, 0.7); c.stroke();
+        c.rotate(-rot * 3);
+        c.strokeStyle = '#6d0a4c'; c.lineWidth = 2;
+        c.beginPath(); c.arc(0, 0, r, 0, TAU); c.stroke();
         break;
       }
       case 'blackhole': {
-        const glow = c.createRadialGradient(0, 0, r * 0.8, 0, 0, r * 2);
-        glow.addColorStop(0, 'rgba(140,80,255,0.55)'); glow.addColorStop(1, 'rgba(140,80,255,0)');
-        c.fillStyle = glow;
-        c.beginPath(); c.arc(0, 0, r * 2, 0, TAU); c.fill();
+        // Swirling aura / accretion disk
+        const pulse = 1 + 0.08 * Math.sin(rot * 3);
+        const aura = c.createRadialGradient(0, 0, r * 0.9, 0, 0, r * 3.2 * pulse);
+        aura.addColorStop(0, 'rgba(160,90,255,0.65)');
+        aura.addColorStop(0.45, 'rgba(255,90,200,0.22)');
+        aura.addColorStop(1, 'rgba(120,60,255,0)');
+        c.fillStyle = aura;
+        c.beginPath(); c.arc(0, 0, r * 3.2 * pulse, 0, TAU); c.fill();
+        c.save();
         c.rotate(rot);
         c.lineCap = 'round';
-        const cols = ['#b388ff', '#ff7ad9', '#8c5cff'];
-        for (let i = 0; i < 3; i++) {
+        const cols = ['#b388ff', '#ff7ad9', '#8c5cff', '#e0ccff'];
+        for (let i = 0; i < 4; i++) {
           c.strokeStyle = cols[i];
-          c.lineWidth = 3;
+          c.globalAlpha = 0.9 - i * 0.15;
+          c.lineWidth = 4 - i * 0.6;
           c.beginPath();
-          c.arc(0, 0, r * (1.15 + i * 0.18), i * 2.1, i * 2.1 + 2.2);
+          c.ellipse(0, 0, r * (1.25 + i * 0.32), r * (1.05 + i * 0.22), i * 0.7, i * 1.7, i * 1.7 + 2.6);
           c.stroke();
         }
+        c.globalAlpha = 1;
+        c.restore();
         c.fillStyle = '#000000';
         c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill();
-        c.strokeStyle = '#7c4dff'; c.lineWidth = 2.5;
-        c.beginPath(); c.arc(0, 0, r, 0, TAU); c.stroke();
+        const rim = c.createRadialGradient(0, 0, r * 0.75, 0, 0, r * 1.08);
+        rim.addColorStop(0, 'rgba(0,0,0,0)'); rim.addColorStop(0.8, 'rgba(180,120,255,0.9)'); rim.addColorStop(1, 'rgba(255,255,255,0)');
+        c.fillStyle = rim;
+        c.beginPath(); c.arc(0, 0, r * 1.08, 0, TAU); c.fill();
         break;
       }
     }
@@ -1178,14 +1501,30 @@
         c.fillStyle = p.color;
         c.beginPath(); c.arc(p.x, p.y, p.size * (1 + k), 0, TAU); c.fill();
         break;
+      case 'flame': {
+        c.globalCompositeOperation = 'lighter';
+        c.globalAlpha = 1 - k;
+        const fr = p.size * (1 - k * 0.5);
+        const fg = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, fr * 1.6);
+        fg.addColorStop(0, p.color);
+        fg.addColorStop(1, 'rgba(255,60,0,0)');
+        c.fillStyle = fg;
+        c.beginPath(); c.arc(p.x, p.y, fr * 1.6, 0, TAU); c.fill();
+        c.globalCompositeOperation = 'source-over';
+        break;
+      }
       case 'bolt':
         c.globalCompositeOperation = 'lighter';
         c.globalAlpha = 1 - k;
-        c.strokeStyle = p.color;
-        c.lineWidth = 3;
         c.lineJoin = 'round';
+        c.lineCap = 'round';
         c.beginPath();
         p.pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y)));
+        c.strokeStyle = 'rgba(90,200,255,0.45)';
+        c.lineWidth = p.size * 3;
+        c.stroke();
+        c.strokeStyle = p.color;
+        c.lineWidth = p.size;
         c.stroke();
         c.globalCompositeOperation = 'source-over';
         break;
@@ -1224,6 +1563,7 @@
           const cp = closestOnSeg(x, y, p);
           if (Math.hypot(x - cp.x, y - cp.y) < 12 + p.t / 2) break outer;
         }
+        for (const q of bumpers) if (Math.hypot(x - q.cx, y - q.cy) < 12 + q.r) break outer;
       }
       c.globalAlpha = 1 - i / dots;
       c.fillStyle = '#ffffff';
@@ -1285,6 +1625,7 @@
     if (shake > 0) ctx.translate(rand(-shake, shake), rand(-shake, shake));
 
     for (const p of platforms) drawPlatform(ctx, p);
+    for (const q of bumpers) drawBumper(ctx, q, simTime);
     for (const b of balloons) if (b.alive) drawBalloon(ctx, b, simTime);
     for (const s of shards) drawShard(ctx, s);
 
@@ -1299,7 +1640,7 @@
       }
       const fading = b.life > BALL_LIFETIME - 3;
       if (fading && Math.floor(b.life * 8) % 2 === 0) ctx.globalAlpha = 0.45;
-      drawBall(ctx, b.type, b.x, b.y, b.r, b.rot);
+      drawBall(ctx, b.type, b.x, b.y, b.r, b.rot, b.flash);
       ctx.globalAlpha = 1;
     }
 
@@ -1314,14 +1655,11 @@
   // HUD / UI
   // ---------------------------------------------------------------------------
   function updateHud() {
-    ui.level.textContent = 'Level ' + currentLevel;
     ui.money.textContent = fmt(save.money);
-    const pct = stats.total ? stats.popped / stats.total : 0;
-    ui.bar.style.width = pct * 100 + '%';
-    ui.bar.classList.toggle('passed', pct >= PASS_RATIO);
-    ui.count.textContent = `${stats.popped} / ${stats.total}`;
-    ui.speed.textContent = save.speed + '×';
-    ui.sound.textContent = save.muted ? '🔇' : '🔊';
+    ui.setLevel.textContent = 'Level ' + currentLevel;
+    ui.speed.textContent = 'Speed ' + save.speed + '×';
+    ui.sound.textContent = save.muted ? 'Sound: Off' : 'Sound: On';
+    ui.sound.setAttribute('aria-pressed', String(!save.muted));
     hudDirty = false;
   }
 
@@ -1334,16 +1672,21 @@
     balls = []; shards = []; particles = []; explosions = []; launchQueue = [];
     endTimer = 0;
     mode = 'aim';
+    closeSettings();
     hide(ui.title); hide(ui.results); hide(ui.shop);
     show(ui.hud);
-    const n = totalBalls();
-    ui.hint.textContent = `Drag back & release to fling ${n} ball${n === 1 ? '' : 's'}`;
-    show(ui.hint);
+    // Only first-time players need the instructions.
+    if (currentLevel === 1) {
+      ui.hint.textContent = 'Drag back & release to fling';
+      show(ui.hint);
+    } else {
+      hide(ui.hint);
+    }
     hudDirty = true;
   }
 
   function launch() {
-    if (mode !== 'aim') return;
+    if (mode !== 'aim' || settingsOpen) return;
     const list = [];
     for (const k of BALL_ORDER) for (let i = 0; i < save.owned[k]; i++) list.push(k);
     shuffle(list);
@@ -1356,44 +1699,31 @@
   function finishLevel() {
     mode = 'results';
     hide(ui.hint);
-    const pct = stats.total ? stats.popped / stats.total : 1;
-    const passed = pct >= PASS_RATIO;
-    let unlock = null;
+    closeSettings();
+    // A level is only won by popping every balloon.
+    const passed = stats.popped >= stats.total;
 
     for (const b of balls) burst(b.x, b.y, 8, { kind: 'smoke', speed: [40, 120], color: '#ffffff', size: [8, 14], life: [0.3, 0.5] });
     balls = []; shards = []; launchQueue = []; explosions = [];
 
     if (passed) {
       save.level++;
-      if (save.level <= UNLOCK_ORDER.length) unlock = UNLOCK_ORDER[save.level - 1];
       Sfx.fanfare();
       Platform.sendScore(save.level - 1);
     }
     persist();
 
-    const perfect = stats.popped >= stats.total;
-    ui.resTitle.textContent = passed ? (perfect ? 'Perfect clear!' : `Level ${currentLevel} cleared!`) : 'So close!';
-    ui.resSub.textContent = passed
-      ? `You popped ${Math.round(pct * 100)}% of the balloons.`
-      : `You popped ${Math.round(pct * 100)}%. Pop 75% to clear. Grab more balls and try again.`;
-    ui.resPopped.textContent = `${stats.popped}/${stats.total}`;
-    ui.resEarned.textContent = '+' + fmt(stats.earned);
-
-    if (unlock) {
-      const def = BALLOON_TYPES[unlock];
-      ui.unlockName.textContent = def.name;
-      ui.unlockHp.textContent = `${def.hp} HP · worth ${def.hp} coin${def.hp === 1 ? '' : 's'}`;
-      const c = ui.unlockCanvas.getContext('2d');
-      c.setTransform(1, 0, 0, 1, 0, 0);
-      c.clearRect(0, 0, 240, 280);
-      c.setTransform(2, 0, 0, 2, 0, 0);
-      const b = makeBalloon(unlock, 60, 58);
-      b.r = Math.min(40, b.r * 1.3);
-      drawBalloon(c, b, 0);
-      show(ui.resUnlock);
+    const left = stats.total - stats.popped;
+    if (passed) {
+      ui.resTitle.textContent = WIN_LINES[Math.floor(Math.random() * WIN_LINES.length)];
+      ui.resSub.textContent = WIN_SUBS[Math.floor(Math.random() * WIN_SUBS.length)];
+      ui.toShop.textContent = 'Next';
     } else {
-      hide(ui.resUnlock);
+      ui.resTitle.textContent = FAIL_LINES[Math.floor(Math.random() * FAIL_LINES.length)];
+      ui.resSub.textContent = `${left} balloon${left === 1 ? '' : 's'} left. Grab more balls and try again!`;
+      ui.toShop.textContent = 'Retry';
     }
+    ui.resEarned.textContent = '+' + fmt(stats.earned);
 
     hudDirty = true;
     setTimeout(() => { show(ui.results); ui.toShop.focus(); }, 350);
@@ -1413,6 +1743,8 @@
     ui.shopList.innerHTML = '';
     for (const key of BALL_ORDER) {
       const def = BALL_TYPES[key];
+      const owned = save.owned[key];
+      const maxed = owned >= BALL_CAP;
       const card = document.createElement('div');
       card.className = 'card';
 
@@ -1420,20 +1752,20 @@
       icon.width = 180; icon.height = 180;
       const ic = icon.getContext('2d');
       ic.setTransform(2, 0, 0, 2, 0, 0);
-      drawBall(ic, key, 45, 45, 24, 0.5);
+      drawBall(ic, key, 45, 45, key === 'blackhole' ? 14 : key === 'rubber' ? 16 : 24, 0.5);
 
       const info = document.createElement('div');
       info.className = 'info';
       info.innerHTML = `<div class="name"></div><div class="desc"></div><div class="owned"></div>`;
       info.querySelector('.name').textContent = def.name;
       info.querySelector('.desc').textContent = def.desc;
-      info.querySelector('.owned').textContent = `Owned: ${save.owned[key]}`;
+      info.querySelector('.owned').textContent = `Owned: ${owned}/${BALL_CAP}`;
 
       const btn = document.createElement('button');
       btn.className = 'buy';
-      btn.textContent = fmt(def.price);
-      btn.disabled = save.money < def.price;
-      btn.setAttribute('aria-label', `Buy ${def.name} for ${def.price} coins`);
+      btn.textContent = maxed ? 'MAX' : fmt(def.price);
+      btn.disabled = maxed || save.money < def.price;
+      btn.setAttribute('aria-label', maxed ? `${def.name}: maximum owned` : `Buy ${def.name} for ${def.price} coins`);
       btn.addEventListener('click', () => buy(key));
 
       card.append(icon, info, btn);
@@ -1443,7 +1775,7 @@
 
   function buy(key) {
     const def = BALL_TYPES[key];
-    if (save.money < def.price) return;
+    if (save.money < def.price || save.owned[key] >= BALL_CAP) return;
     save.money -= def.price;
     save.owned[key]++;
     Sfx.coin();
@@ -1453,6 +1785,22 @@
     const btns = ui.shopList.querySelectorAll('.buy');
     const idx = BALL_ORDER.indexOf(key);
     if (btns[idx] && !btns[idx].disabled) btns[idx].focus();
+  }
+
+  function openSettings() {
+    if (settingsOpen) return;
+    settingsOpen = true;
+    drag = null;
+    hudDirty = true;
+    show(ui.settings);
+    ui.resume.focus();
+  }
+
+  function closeSettings() {
+    if (!settingsOpen) return;
+    settingsOpen = false;
+    lastT = performance.now();
+    hide(ui.settings);
   }
 
   // ---------------------------------------------------------------------------
@@ -1481,7 +1829,7 @@
 
   canvas.addEventListener('pointerdown', (e) => {
     Sfx.unlock();
-    if (mode !== 'aim') return;
+    if (mode !== 'aim' || settingsOpen) return;
     canvas.setPointerCapture(e.pointerId);
     const p = toWorld(e);
     drag = { x: p.x, y: p.y, len: 0, id: e.pointerId };
@@ -1504,7 +1852,12 @@
 
   window.addEventListener('keydown', (e) => {
     Sfx.unlock();
-    if (mode !== 'aim' || e.target instanceof HTMLButtonElement) return;
+    if (e.key === 'Escape' && (mode === 'aim' || mode === 'play')) {
+      settingsOpen ? closeSettings() : openSettings();
+      e.preventDefault();
+      return;
+    }
+    if (mode !== 'aim' || settingsOpen || e.target instanceof HTMLButtonElement) return;
     switch (e.key) {
       case 'ArrowLeft': aim.angle = clamp(aim.angle - 0.03, -Math.PI + 0.15, -0.15); e.preventDefault(); break;
       case 'ArrowRight': aim.angle = clamp(aim.angle + 0.03, -Math.PI + 0.15, -0.15); e.preventDefault(); break;
@@ -1518,6 +1871,8 @@
   ui.play.addEventListener('click', () => { Sfx.unlock(); startLevel(); });
   ui.toShop.addEventListener('click', openShop);
   ui.next.addEventListener('click', startLevel);
+  ui.settingsBtn.addEventListener('click', () => { Sfx.unlock(); openSettings(); });
+  ui.resume.addEventListener('click', closeSettings);
   ui.speed.addEventListener('click', () => {
     save.speed = save.speed >= 3 ? 1 : save.speed + 1;
     persist();
@@ -1571,13 +1926,31 @@
         aim.angle = clamp(angle, -Math.PI + 0.15, -0.15);
         aim.power = clamp(power, 0.15, 1);
       },
-      configure({ level = 1, owned = {}, money = 0 } = {}) {
+      configure({ level = 1, owned = {}, money = 0, seed } = {}) {
         save.level = Math.max(1, Math.floor(level));
         save.money = Math.max(0, Math.floor(money));
-        for (const type of BALL_ORDER) save.owned[type] = Math.max(0, Math.floor(owned[type] || 0));
+        if (Number.isInteger(seed)) save.seed = seed >>> 0;
+        for (const type of BALL_ORDER) save.owned[type] = clamp(Math.floor(owned[type] || 0), 0, BALL_CAP);
         if (!totalBalls()) save.owned.ball = 1;
         startLevel();
       },
+      // Layout fingerprint used by the verification harness.
+      summary() {
+        const types = {};
+        for (const b of balloons) types[b.type] = (types[b.type] || 0) + 1;
+        const obstacles = { bumper: bumpers.length };
+        for (const p of platforms) obstacles[p.kind] = (obstacles[p.kind] || 0) + 1;
+        return {
+          types, obstacles,
+          layout: balloons.map((b) => `${b.type}@${b.x.toFixed(1)},${b.baseY.toFixed(1)}`).join('|')
+            + '#' + platforms.map((p) => `${p.kind}${p.x1.toFixed(1)},${p.y1.toFixed(1)}`).join('|')
+            + '#' + bumpers.map((q) => `${q.cx.toFixed(1)},${q.cy.toFixed(1)}`).join('|'),
+        };
+      },
+      get save() { return JSON.parse(JSON.stringify(save)); },
+      buy,
+      openSettings,
+      closeSettings,
       pop(count = 1) {
         const live = balloons.filter((b) => b.alive).slice(0, count);
         for (const b of live) damageBalloon(b, Infinity);
@@ -1601,7 +1974,7 @@
   function frame(now) {
     const dt = Math.min(0.05, (now - lastT) / 1000);
     lastT = now;
-    if (!paused && !manualCapture) {
+    if (!paused && !settingsOpen && !manualCapture) {
       const sdt = dt * (mode === 'play' ? save.speed : 1);
       acc += sdt;
       let steps = 0;
@@ -1626,7 +1999,7 @@
     resize();
     buildBackground();
     // A decorative level behind the title screen.
-    generateLevel(3);
+    generateLevel(14);
     stats = { total: 0, popped: 0, earned: 0 };
     requestAnimationFrame(frame);
 
