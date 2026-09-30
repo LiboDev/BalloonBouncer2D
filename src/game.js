@@ -1904,7 +1904,7 @@
     }
   });
 
-  ui.play.addEventListener('click', () => { Sfx.unlock(); startLevel(); });
+  ui.play.addEventListener('click', () => { Sfx.unlock(); Sfx.boing(); startLevel(); });
   ui.toShop.addEventListener('click', openShop);
   ui.next.addEventListener('click', startLevel);
   ui.settingsBtn.addEventListener('click', () => { Sfx.unlock(); openSettings(); });

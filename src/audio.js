@@ -9,7 +9,7 @@ window.Sfx = (() => {
 
   function unlock() {
     if (ctx) {
-      if (ctx.state === 'suspended' && platformAudio) ctx.resume();
+      if (ctx.state === 'suspended' && platformAudio) void ctx.resume().catch(() => {});
       return;
     }
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -21,6 +21,7 @@ window.Sfx = (() => {
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    if (ctx.state === 'suspended' && platformAudio) void ctx.resume().catch(() => {});
   }
 
   // Throttle each sound so big chain reactions don't turn into noise.
@@ -69,7 +70,7 @@ window.Sfx = (() => {
     setEnabled(v) { enabled = v; },
     setPlatformAudio(v) {
       platformAudio = v;
-      if (ctx) v ? ctx.resume() : ctx.suspend();
+      if (ctx) void (v ? ctx.resume() : ctx.suspend()).catch(() => {});
     },
     pop() {
       if (!ok('pop', 0.025)) return;
